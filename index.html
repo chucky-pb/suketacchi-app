@@ -1238,12 +1238,13 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'authToast';
-      toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:12px 24px;border-radius:25px;font-size:13px;z-index:9999;opacity:0;transition:opacity 0.3s;max-width:340px;text-align:center;font-family:"Noto Sans JP",sans-serif;';
+      toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:12px 24px;border-radius:25px;font-size:13px;z-index:9999;opacity:0;transition:opacity 0.3s;max-width:340px;text-align:center;font-family:"Noto Sans JP",sans-serif;pointer-events:none;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
     toast.style.opacity = '1';
-    setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    toast.style.pointerEvents = 'auto';
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.pointerEvents = 'none'; }, 3000);
   }
 
   // Handle LINE callback (check URL params on load)
