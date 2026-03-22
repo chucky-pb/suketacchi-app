@@ -2573,6 +2573,1932 @@
   .speed-train { background: #E3F2FD; color: #1565C0; }
   .speed-still { background: #F3E5F5; color: #6A1B9A; }
 
+  /* ===== ROUTE SETTINGS ===== */
+  #route-settings { background: var(--bg-light); }
+  .route-section { margin: 16px; }
+  .route-section-title { font-size: 13px; font-weight: 700; color: var(--text-light); margin-bottom: 8px; padding-left: 4px; }
+  .route-card {
+    background: white; border-radius: 16px; padding: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06); margin-bottom: 12px;
+  }
+  .route-station-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .route-station-row:last-child { border-bottom: none; }
+  .route-station-icon { font-size: 20px; width: 32px; text-align: center; }
+  .route-station-info { flex: 1; }
+  .route-station-label { font-size: 11px; color: var(--text-light); }
+  .route-station-name { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .route-station-name.placeholder { color: #CCC; }
+  .route-station-btn {
+    padding: 6px 14px; border: 1.5px solid var(--primary); border-radius: 20px;
+    background: white; color: var(--primary); font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .route-line-connector {
+    width: 2px; height: 24px; background: var(--primary);
+    margin-left: 27px; position: relative;
+  }
+  .route-line-connector::before {
+    content: ''; position: absolute; top: 50%; left: -4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--primary-light); border: 2px solid var(--primary);
+    transform: translateY(-50%);
+  }
+  .route-time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .route-time-input {
+    padding: 12px; border: 1.5px solid var(--border); border-radius: 12px;
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    text-align: center; width: 100%; background: white;
+  }
+  .route-time-input:focus { border-color: var(--primary); outline: none; }
+  .route-time-label { font-size: 11px; color: var(--text-light); text-align: center; margin-bottom: 4px; }
+  .route-day-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+  .route-day-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1.5px solid var(--border); background: white;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .route-day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .route-save-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 30px;
+    background: var(--primary); color: white;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; margin-top: 8px;
+  }
+  .route-save-btn:disabled { background: #CCC; }
+  .route-preview {
+    background: linear-gradient(135deg, var(--primary-light), #E1F5FE);
+    border-radius: 16px; padding: 16px; margin-top: 4px;
+  }
+  .route-preview-title { font-size: 12px; font-weight: 700; color: var(--primary-deep); margin-bottom: 8px; }
+  .route-preview-stops {
+    display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12px;
+  }
+  .route-preview-stop { padding: 3px 8px; background: white; border-radius: 8px; font-weight: 500; }
+  .route-preview-arrow { color: var(--primary); font-weight: 700; }
+  .station-search-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 400; display: none; align-items: flex-end; justify-content: center;
+  }
+  .station-search-modal.show { display: flex; }
+  .station-search-panel {
+    background: white; width: 100%; max-width: 430px;
+    border-radius: 20px 20px 0 0; padding: 20px;
+    max-height: 80vh; display: flex; flex-direction: column;
+    animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .station-search-input {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+    border-radius: 12px; font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
+    margin-bottom: 12px;
+  }
+  .station-search-input:focus { border-color: var(--primary); outline: none; }
+  .station-search-results { flex: 1; overflow-y: auto; max-height: 50vh; }
+  .station-search-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 8px; border-bottom: 1px solid #F5F5F5; cursor: pointer;
+  }
+  .station-search-item:active { background: var(--primary-light); }
+  .station-search-item .st-name { font-size: 15px; font-weight: 700; }
+  .station-search-item .st-lines { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="app-container">
+
+<!-- ===== SPLASH ===== -->
+<div class="screen active" id="splash">
+  <div class="splash-mascot">🤝</div>
+  <div class="splash-title">助太っち</div>
+  <div class="splash-sub">S E A T &nbsp; I T !</div>
+</div>
+
+<!-- ===== ONBOARDING ===== -->
+<div class="screen" id="onboarding">
+  <div class="onboard-header">
+    <span>初期設定</span>
+    <button class="onboard-skip" onclick="goTo('register')">スキップ</button>
+  </div>
+  <div class="onboard-content" id="onboardContent">
+    <div class="onboard-illustration" id="onboardIllust">👥</div>
+    <div class="onboard-title" id="onboardTitle">リアルタイムマッチング</div>
+    <div class="onboard-desc" id="onboardDesc">GPS・列車情報からリアルタイムで<br>席を譲りたい人と必要な人をマッチング</div>
+  </div>
+  <div class="onboard-dots" id="onboardDots">
+    <div class="onboard-dot active"></div>
+    <div class="onboard-dot"></div>
+    <div class="onboard-dot"></div>
+  </div>
+  <button class="onboard-btn" onclick="nextOnboard()">次へ</button>
+</div>
+
+<!-- ===== REGISTER ===== -->
+<div class="screen" id="register">
+  <div class="register-hero">
+    <div class="register-logo">🤝</div>
+    <div class="register-title">助太っち</div>
+    <div class="register-sub">~ Seat it! ~</div>
+  </div>
+  <div class="social-login-section">
+    <div class="social-divider"><span>アカウントでログイン</span></div>
+    <div class="social-buttons">
+      <button class="social-btn google-btn" onclick="signInWithGoogle()">
+        <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Googleでログイン
+      </button>
+      <button class="social-btn apple-btn" onclick="signInWithApple()">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.62-2.2.44-3.06-.4C3.79 16.17 4.36 9.02 8.9 8.75c1.26.06 2.14.72 2.88.75.86-.18 2.52-1.06 4.06-.9 1.44.12 2.52.66 3.24 1.68-2.9 1.78-2.22 5.6.5 6.72-.6 1.58-1.38 3.14-2.53 4.28zM12.03 8.67c-.14-2.5 1.92-4.63 4.28-4.84.34 2.94-2.64 5.12-4.28 4.84z"/></svg>
+        Appleでログイン
+      </button>
+      <button class="social-btn line-btn" onclick="signInWithLINE()">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        LINEでログイン
+      </button>
+    </div>
+    <div class="social-divider"><span>または</span></div>
+  </div>
+  <div class="register-form" style="padding-top: 0;">
+    <div class="form-group">
+      <label class="form-label">メールアドレス</label>
+      <input class="form-input" id="emailInput" type="email" placeholder="mail@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">パスワード</label>
+      <input class="form-input" id="passwordInput" type="password" placeholder="6文字以上のパスワード">
+    </div>
+    <button class="btn-full btn-primary-full" onclick="signInWithEmail()">メールで登録 / ログイン</button>
+    <div class="register-footer">
+      <a href="#">利用規約・プライバシーポリシー</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== USER TYPE SELECT ===== -->
+<div class="screen" id="usertype">
+  <div class="usertype-header">助太っち</div>
+  <div class="usertype-content">
+    <div class="usertype-question">あなたはどなたですか？</div>
+    <div class="usertype-options">
+      <button class="usertype-btn" onclick="this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)'">
+        <div class="usertype-icon">🪑</div>
+        <div class="usertype-label">
+          <h3>席を譲りたい</h3>
+          <p>座席を必要としている方をサポートします</p>
+        </div>
+      </button>
+      <button class="usertype-btn" onclick="this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)'">
+        <div class="usertype-icon">🙋</div>
+        <div class="usertype-label">
+          <h3>席が必要です</h3>
+          <p>妊娠中・ベビーカー・体調不良など</p>
+        </div>
+      </button>
+    </div>
+    <button class="usertype-action" onclick="goTo('main')">はじめる</button>
+  </div>
+</div>
+
+<!-- ===== MAIN HOME ===== -->
+<div class="screen" id="main">
+  <div class="main-header">
+    <div class="main-header-left">
+      <div class="main-header-logo">🤝</div>
+      <h1>助太っち</h1>
+    </div>
+    <div class="main-header-right">
+      <button class="header-btn" onclick="alert('🔔 通知\n\n1. 優しさ接近中！丸ノ内線に14名\n2. クエスト達成まであと1件\n3. +340pt 今月獲得')">🔔<span class="notif-badge">3</span></button>
+      <button class="header-btn" onclick="switchTab('profile')">👤</button>
+    </div>
+  </div>
+
+  <div class="status-section">
+    <div class="status-card">
+      <button class="status-toggle-btn" id="mainToggle" onclick="toggleMain()">🪑</button>
+      <div class="status-text" id="mainStatusText">タップして助太刀モードON</div>
+      <div class="status-sub">現在のステータス</div>
+    </div>
+  </div>
+
+  <div class="kindness-alert" id="kindnessAlert">
+    <div class="alert-emoji" id="alertEmoji">☀️</div>
+    <div class="alert-body">
+      <h3 id="alertTitle">優しさ接近中！</h3>
+      <p id="alertDesc">丸ノ内線 東京方面に優しい人が多数乗車中</p>
+    </div>
+  </div>
+
+  <div class="section-label">近くのリクエスト</div>
+
+  <div class="match-card fade-in">
+    <div class="match-card-top">
+      <span class="match-badge badge-need">席が必要です</span>
+      <div class="match-row">
+        <div class="match-avatar">🤰</div>
+        <div class="match-info">
+          <h3>匿名ユーザー</h3>
+          <p>丸ノ内線 東京駅 → 大手町駅 ・ 1分前</p>
+          <div class="match-tags">
+            <span class="match-tag">妊娠中</span>
+            <span class="match-tag">2号車</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="match-card-actions">
+      <button class="match-action-btn" onclick="startMatching()">席を譲る</button>
+      <button class="match-action-btn">次へ</button>
+    </div>
+  </div>
+
+  <div class="match-card fade-in">
+    <div class="match-card-top">
+      <span class="match-badge badge-need">席が必要です</span>
+      <div class="match-row">
+        <div class="match-avatar">👴</div>
+        <div class="match-info">
+          <h3>匿名ユーザー</h3>
+          <p>丸ノ内線 東京駅 → 後楽園駅 ・ 3分前</p>
+          <div class="match-tags">
+            <span class="match-tag">高齢者</span>
+            <span class="match-tag">5号車</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="match-card-actions">
+      <button class="match-action-btn" onclick="startMatching()">席を譲る</button>
+      <button class="match-action-btn">次へ</button>
+    </div>
+  </div>
+
+  <!-- Bottom nav (shown on all main tabs) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-tab="main" onclick="switchTab('main')">
+      <span class="nav-icon">🏠</span>ホーム
+    </button>
+    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')">
+      <span class="nav-icon">📋</span>クエスト
+    </button>
+    <button class="nav-item nav-center" onclick="showSheet()">
+      <span class="nav-icon">🤝</span>
+    </button>
+    <button class="nav-item" data-tab="points" onclick="switchTab('points')">
+      <span class="nav-icon">🏅</span>ポイント
+    </button>
+    <button class="nav-item" data-tab="map" onclick="switchTab('map')">
+      <span class="nav-icon">🗺️</span>マップ
+    </button>
+  </nav>
+</div>
+
+<!-- ===== QUEST ===== -->
+<div class="screen" id="quest">
+  <div class="main-header">
+    <div class="main-header-left"><div class="main-header-logo">📋</div><h1>クエスト</h1></div>
+    <div class="main-header-right"><button class="header-btn" onclick="switchTab('profile')">👤</button></div>
+  </div>
+  <div class="section-label" style="margin-top:16px;">アクティブクエスト</div>
+  <div class="quest-list">
+    <div class="quest-item">
+      <div class="quest-icon qi-blue">♿</div>
+      <div class="quest-detail">
+        <h3>バリアフリー情報を投稿しよう</h3>
+        <p>駅のエレベーター・スロープの情報を共有</p>
+        <span class="quest-reward-badge">🏅 +30pt</span>
+        <div class="quest-progress"><div class="quest-fill" style="width:60%"></div></div>
+      </div>
+    </div>
+    <div class="quest-item">
+      <div class="quest-icon qi-purple">🚼</div>
+      <div class="quest-detail">
+        <h3>授乳室・ベビールーム情報</h3>
+        <p>駅周辺の授乳室やベビールームを共有</p>
+        <span class="quest-reward-badge">🏅 +25pt</span>
+        <div class="quest-progress"><div class="quest-fill" style="width:30%"></div></div>
+      </div>
+    </div>
+    <div class="quest-item">
+      <div class="quest-icon qi-green">📸</div>
+      <div class="quest-detail">
+        <h3>駅の混雑状況をレポート</h3>
+        <p>リアルタイムの混雑情報を写真付きで投稿</p>
+        <span class="quest-reward-badge">🏅 +20pt</span>
+        <div class="quest-progress"><div class="quest-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="quest-item">
+      <div class="quest-icon qi-orange">🌟</div>
+      <div class="quest-detail">
+        <h3>毎日助太刀さんチャレンジ</h3>
+        <p>7日間連続でサービスをONにしよう</p>
+        <span class="quest-reward-badge">🏅 +150pt</span>
+        <div class="quest-progress"><div class="quest-fill" style="width:71%"></div></div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
+    <button class="nav-item active" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
+    <button class="nav-item" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+  </nav>
+</div>
+
+<!-- ===== POINTS ===== -->
+<div class="screen" id="points">
+  <div class="main-header">
+    <div class="main-header-left"><div class="main-header-logo">🏅</div><h1>ポイント</h1></div>
+    <div class="main-header-right"><button class="header-btn" onclick="switchTab('profile')">👤</button></div>
+  </div>
+  <div class="points-hero">
+    <div class="points-label">保有ポイント</div>
+    <div class="points-num">1,280</div>
+    <div class="points-sub">今月 +340pt 獲得</div>
+    <div class="points-btns">
+      <button class="points-btn">ポイント交換</button>
+      <button class="points-btn">履歴を見る</button>
+    </div>
+  </div>
+  <div class="section-label">優しさランキング（渋谷区）</div>
+  <div class="ranking-section">
+    <div class="ranking-item"><div class="rank-badge">🥇</div><div class="rank-name">渋谷駅</div><div class="rank-bar"><div class="rank-fill" style="width:95%"></div></div><div class="rank-score">2,340</div></div>
+    <div class="ranking-item"><div class="rank-badge">🥈</div><div class="rank-name">表参道駅</div><div class="rank-bar"><div class="rank-fill" style="width:78%"></div></div><div class="rank-score">1,890</div></div>
+    <div class="ranking-item"><div class="rank-badge">🥉</div><div class="rank-name">恵比寿駅</div><div class="rank-bar"><div class="rank-fill" style="width:65%"></div></div><div class="rank-score">1,560</div></div>
+  </div>
+  <div class="section-label" style="margin-top:16px;">ポイント履歴</div>
+  <div class="history-item"><div class="hist-icon hist-green">🎉</div><div class="hist-detail"><h4>座席サポート成立</h4><p>丸ノ内線 東京駅 ・ 今日 8:32</p></div><div class="hist-pts pts-plus">+50</div></div>
+  <div class="history-item"><div class="hist-icon hist-green">📝</div><div class="hist-detail"><h4>クエスト達成</h4><p>渋谷駅 ・ 昨日 17:15</p></div><div class="hist-pts pts-plus">+30</div></div>
+  <div class="history-item"><div class="hist-icon hist-orange">🛍️</div><div class="hist-detail"><h4>エキナカマルシェで使用</h4><p>東京駅 ・ 3/18</p></div><div class="hist-pts pts-minus">-200</div></div>
+  <div class="history-item"><div class="hist-icon hist-green">🏆</div><div class="hist-detail"><h4>連続5日ボーナス</h4><p>3/17</p></div><div class="hist-pts pts-plus">+100</div></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
+    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item active" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
+    <button class="nav-item" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+  </nav>
+</div>
+
+<!-- ===== MAP ===== -->
+<div class="screen" id="map">
+  <div class="main-header">
+    <div class="main-header-left"><div class="main-header-logo">🗺️</div><h1>優しさマップ</h1></div>
+    <div class="main-header-right"><button class="header-btn" onclick="switchTab('profile')">👤</button></div>
+  </div>
+
+  <!-- 位置情報ステータス -->
+  <div class="map-status-bar" id="gpsStatusBar">
+    <div class="map-status-icon" id="gpsStatusIcon">📍</div>
+    <div class="map-status-text">
+      <div class="status-label" id="gpsStatusLabel">位置情報を取得中...</div>
+      <div class="status-detail" id="gpsStatusDetail">GPSを起動しています</div>
+    </div>
+    <button class="map-btn-locate" id="btnLocate" onclick="requestGPS()">取得</button>
+  </div>
+
+  <!-- Leaflet地図 -->
+  <div class="map-container">
+    <div id="leafletMap"></div>
+  </div>
+
+  <!-- GPS情報カード -->
+  <div class="map-info-cards" id="gpsInfoCards">
+    <div class="map-info-card">
+      <div class="card-icon">🚉</div>
+      <div class="card-content">
+        <div class="card-title" id="nearestStationName">最寄り駅を検索中...</div>
+        <div class="card-desc" id="nearestStationDist">--</div>
+      </div>
+      <div class="card-value" id="nearestStationLine">--</div>
+    </div>
+    <div class="map-info-card">
+      <div class="card-icon">🏃</div>
+      <div class="card-content">
+        <div class="card-title">移動状態</div>
+        <div class="card-desc" id="movementDetail">検出中...</div>
+      </div>
+      <div class="card-value" id="movementSpeed">--</div>
+    </div>
+    <div class="map-info-card">
+      <div class="card-icon">📶</div>
+      <div class="card-content">
+        <div class="card-title">GPS精度</div>
+        <div class="card-desc" id="gpsAccuracyDetail">--</div>
+      </div>
+      <div class="card-value" id="gpsAccuracy">--</div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
+    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
+    <button class="nav-item active" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+  </nav>
+</div>
+
+<!-- ===== PROFILE ===== -->
+<div class="screen" id="profile">
+  <div class="main-header">
+    <div class="main-header-left">
+      <button class="header-btn" onclick="switchTab('main')" style="background:rgba(255,255,255,0.2);">←</button>
+      <h1>プロフィール</h1>
+    </div>
+  </div>
+  <div class="profile-card">
+    <div class="profile-avatar">🦸</div>
+    <div class="profile-name">佐々木 大輔</div>
+    <div class="profile-badge-title">好きあらば助太刀さん</div>
+    <div class="profile-stats">
+      <div class="pstat"><div class="num">47</div><div class="label">サポート回数</div></div>
+      <div class="pstat"><div class="num">1,280</div><div class="label">ポイント</div></div>
+      <div class="pstat"><div class="num">12</div><div class="label">連続日数</div></div>
+    </div>
+  </div>
+
+  <div class="profile-menu">
+    <div class="menu-section-title">称号</div>
+    <div class="menu-item" style="border-radius:12px;"><span class="menu-icon">🏆</span><span class="menu-label">ヘルプアーツ・クエストハンター</span><span class="menu-arrow">›</span></div>
+
+    <div class="menu-section-title">キャラクター図鑑</div>
+  </div>
+  <div class="char-grid">
+    <div class="char-item"><div class="emoji">👦</div><div class="name">助太くん</div></div>
+    <div class="char-item"><div class="emoji">👧</div><div class="name">優子ちゃん</div></div>
+    <div class="char-item"><div class="emoji">🧓</div><div class="name">和夫さん</div></div>
+    <div class="char-item"><div class="emoji">👩‍🦰</div><div class="name">美咲さん</div></div>
+    <div class="char-item"><div class="emoji">🧑‍💼</div><div class="name">大輔さん</div></div>
+    <div class="char-item locked"><div class="emoji">🔒</div><div class="name">???</div></div>
+  </div>
+
+  <div class="profile-menu">
+    <div class="menu-section-title">通勤・通学</div>
+    <div class="menu-item" style="border-radius:12px;" onclick="goTo('route-settings')"><span class="menu-icon">🚆</span><span class="menu-label">通勤ルート設定</span><span class="menu-arrow" id="routeStatusArrow">未設定 ›</span></div>
+
+    <div class="menu-section-title">設定</div>
+    <div class="menu-item" style="border-radius:12px 12px 0 0;"><span class="menu-icon">🔔</span><span class="menu-label">通知に関する設定</span><span class="menu-arrow">›</span></div>
+    <div class="menu-item"><span class="menu-icon">📍</span><span class="menu-label">住居圏情報の管理</span><span class="menu-arrow">›</span></div>
+    <div class="menu-item" style="border-radius:0 0 12px 12px;"><span class="menu-icon">💳</span><span class="menu-label">ICカード管理</span><span class="menu-arrow">›</span></div>
+  </div>
+
+  <div class="ic-card">
+    <div class="ic-label">登録済みICカード</div>
+    <div class="ic-number">Suica ****-****-****-1234</div>
+    <div class="ic-verified">認証済み ✓</div>
+  </div>
+
+  <div class="auth-user-bar" id="authUserBar" style="display:none; margin:16px;">
+    <div class="auth-user-avatar" id="authAvatar">U</div>
+    <div class="auth-user-info">
+      <div class="auth-user-name" id="authName">ユーザー</div>
+      <div class="auth-user-email" id="authEmail"></div>
+    </div>
+    <button class="auth-logout-btn" onclick="signOut()">ログアウト</button>
+  </div>
+</div>
+
+<!-- ===== ROUTE SETTINGS ===== -->
+<div class="screen" id="route-settings">
+  <div class="main-header">
+    <div class="main-header-left">
+      <button class="header-btn" onclick="goTo('profile')" style="background:rgba(255,255,255,0.2);">←</button>
+      <h1>通勤ルート設定</h1>
+    </div>
+  </div>
+
+  <div class="route-section">
+    <div class="route-section-title">🚉 乗降駅</div>
+    <div class="route-card">
+      <div class="route-station-row">
+        <div class="route-station-icon">🟢</div>
+        <div class="route-station-info">
+          <div class="route-station-label">乗車駅（出発）</div>
+          <div class="route-station-name" id="routeFromName">駅を選択してください</div>
+        </div>
+        <button class="route-station-btn" onclick="openStationSearch('from')">選択</button>
+      </div>
+      <div class="route-line-connector"></div>
+      <div class="route-station-row">
+        <div class="route-station-icon">🔴</div>
+        <div class="route-station-info">
+          <div class="route-station-label">降車駅（到着）</div>
+          <div class="route-station-name" id="routeToName">駅を選択してください</div>
+        </div>
+        <button class="route-station-btn" onclick="openStationSearch('to')">選択</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 経由駅プレビュー -->
+  <div class="route-section" id="routePreviewSection" style="display:none;">
+    <div class="route-preview">
+      <div class="route-preview-title">📍 マッチング対象区間</div>
+      <div class="route-preview-stops" id="routePreviewStops"></div>
+    </div>
+  </div>
+
+  <div class="route-section">
+    <div class="route-section-title">⏰ 通勤時間帯</div>
+    <div class="route-card">
+      <div class="route-time-grid">
+        <div>
+          <div class="route-time-label">行き（出発時刻）</div>
+          <input type="time" class="route-time-input" id="routeTimeGo" value="07:30">
+        </div>
+        <div>
+          <div class="route-time-label">帰り（出発時刻）</div>
+          <input type="time" class="route-time-input" id="routeTimeBack" value="18:00">
+        </div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text-light);margin-top:8px;">前後30分の範囲で自動的にアクティブになります</div>
+    </div>
+  </div>
+
+  <div class="route-section">
+    <div class="route-section-title">📅 利用する曜日</div>
+    <div class="route-card">
+      <div class="route-day-grid">
+        <button class="route-day-btn active" data-day="mon" onclick="toggleDay(this)">月</button>
+        <button class="route-day-btn active" data-day="tue" onclick="toggleDay(this)">火</button>
+        <button class="route-day-btn active" data-day="wed" onclick="toggleDay(this)">水</button>
+        <button class="route-day-btn active" data-day="thu" onclick="toggleDay(this)">木</button>
+        <button class="route-day-btn active" data-day="fri" onclick="toggleDay(this)">金</button>
+        <button class="route-day-btn" data-day="sat" onclick="toggleDay(this)">土</button>
+        <button class="route-day-btn" data-day="sun" onclick="toggleDay(this)">日</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="route-section">
+    <button class="route-save-btn" id="routeSaveBtn" onclick="saveRoute()">ルートを保存する</button>
+  </div>
+</div>
+
+<!-- Station search modal -->
+<div class="station-search-modal" id="stationSearchModal">
+  <div class="station-search-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="font-size:16px;font-weight:700;" id="stationSearchTitle">駅を検索</h3>
+      <button onclick="closeStationSearch()" style="border:none;background:none;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <input type="text" class="station-search-input" id="stationSearchInput" placeholder="駅名を入力（例：新宿）" oninput="filterStations()">
+    <div class="station-search-results" id="stationSearchResults"></div>
+  </div>
+</div>
+
+<!-- ===== NO MATCH SCREEN ===== -->
+<div class="screen" id="no-match">
+  <div class="main-header">
+    <div class="main-header-left"><button class="header-btn" onclick="goTo('main')" style="background:rgba(255,255,255,0.2);">←</button><h1>マッチング結果</h1></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">
+    <div class="nomatch-mascot">😿</div>
+    <div class="nomatch-title">マッチングが<br>見つかりませんでした</div>
+    <div class="nomatch-desc" style="margin-top:12px;">現在、近くにサポートが必要な方が<br>いないようです。引き続き探します。</div>
+    <div class="nomatch-actions">
+      <button class="btn-full btn-primary-full" onclick="goTo('main')">ホームに戻る</button>
+      <button class="btn-full btn-outline-full">通知を受け取る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SUBMISSION SUCCESS ===== -->
+<div class="screen" id="success">
+  <div class="success-icon">✅</div>
+  <div class="success-title">送信完了しました</div>
+  <div class="success-desc">リクエストを受け付けました。<br>マッチングが成立次第お知らせします。</div>
+  <button class="success-btn" onclick="goTo('main')">ホームに戻る</button>
+</div>
+
+<!-- ===== MATCHING OVERLAY ===== -->
+<div class="overlay" id="matchOverlay">
+  <div class="overlay-popup" id="matchPopup">
+    <div id="matchContent">
+      <div class="spinner"></div>
+      <h2 style="font-size:18px;">マッチング中...</h2>
+      <p style="font-size:13px;color:var(--text-light);margin-top:8px;">近くのサポートが必要な方を探しています</p>
+    </div>
+    <button class="sheet-close" style="margin-top:20px;" onclick="closeOverlay()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ===== REQUEST SHEET ===== -->
+<div class="bottom-sheet" id="requestSheet">
+  <div class="sheet-content">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">サポートをリクエスト</div>
+    <div class="sheet-desc">席が必要な理由を選んでください</div>
+    <div class="sheet-grid">
+      <button class="sheet-option" onclick="sendReq('妊娠中')"><span class="emoji">🤰</span><span class="label">妊娠中</span></button>
+      <button class="sheet-option" onclick="sendReq('ベビーカー')"><span class="emoji">👶</span><span class="label">ベビーカー</span></button>
+      <button class="sheet-option" onclick="sendReq('体調不良')"><span class="emoji">🤕</span><span class="label">体調不良</span></button>
+      <button class="sheet-option" onclick="sendReq('身体障害')"><span class="emoji">♿</span><span class="label">身体障害</span></button>
+      <button class="sheet-option" onclick="sendReq('高齢者')"><span class="emoji">👴</span><span class="label">高齢者</span></button>
+      <button class="sheet-option" onclick="sendReq('その他')"><span class="emoji">🙋</span><span class="label">その他</span></button>
+    </div>
+    <button class="sheet-close" onclick="closeSheet()">閉じる</button>
+  </div>
+</div>
+
+</div><!-- /app-container -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+  // ===== Firebase Config =====
+  // TODO: Replace with your Firebase project config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBAMLWL3kAziYmgf2fn7f7UpdhAb10jfJQ",
+    authDomain: "suketacchi.firebaseapp.com",
+    projectId: "suketacchi",
+    storageBucket: "suketacchi.firebasestorage.app",
+    messagingSenderId: "890850352704",
+    appId: "1:890850352704:web:d99b1fd5dc46938e7ac9a5",
+    measurementId: "G-LM85JLQM2S"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // ===== Auth State =====
+  let currentUser = null;
+
+  auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI();
+    if (user) {
+      console.log('Logged in:', user.displayName || user.email);
+    }
+  });
+
+  function updateAuthUI() {
+    const userBar = document.getElementById('authUserBar');
+    if (!userBar) return;
+    if (currentUser) {
+      const name = currentUser.displayName || currentUser.email || 'ユーザー';
+      const email = currentUser.email || '';
+      const photoURL = currentUser.photoURL;
+      userBar.style.display = 'flex';
+      document.getElementById('authAvatar').innerHTML = photoURL
+        ? `<img src="${photoURL}" alt="">`
+        : name.charAt(0).toUpperCase();
+      document.getElementById('authName').textContent = name;
+      document.getElementById('authEmail').textContent = email;
+    } else {
+      userBar.style.display = 'none';
+    }
+  }
+
+  // ===== Social Login Functions =====
+  async function signInWithGoogle() {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await auth.signInWithPopup(provider);
+      console.log('Google login success:', result.user.displayName);
+      goTo('usertype');
+    } catch (error) {
+      handleAuthError(error, 'Google');
+    }
+  }
+
+  async function signInWithApple() {
+    try {
+      const provider = new firebase.auth.OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      const result = await auth.signInWithPopup(provider);
+      console.log('Apple login success:', result.user.displayName);
+      goTo('usertype');
+    } catch (error) {
+      handleAuthError(error, 'Apple');
+    }
+  }
+
+  function signInWithLINE() {
+    // LINE Login uses OAuth2 redirect flow
+    // TODO: Replace with your LINE Login Channel ID
+    const LINE_CHANNEL_ID = 'YOUR_LINE_CHANNEL_ID';
+    const REDIRECT_URI = encodeURIComponent(window.location.origin + window.location.pathname);
+    const STATE = Math.random().toString(36).substring(2);
+    sessionStorage.setItem('line_state', STATE);
+    const lineAuthURL = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CHANNEL_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}&scope=profile%20openid%20email`;
+    window.location.href = lineAuthURL;
+  }
+
+  async function signInWithEmail() {
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    if (!email || !password) {
+      showToast('メールアドレスとパスワードを入力してください');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('パスワードは6文字以上で入力してください');
+      return;
+    }
+    try {
+      // Try sign in first, if fails try create account
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (e) {
+        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+          await auth.createUserWithEmailAndPassword(email, password);
+        } else {
+          throw e;
+        }
+      }
+      goTo('usertype');
+    } catch (error) {
+      handleAuthError(error, 'メール');
+    }
+  }
+
+  function handleAuthError(error, provider) {
+    console.error(`${provider} auth error:`, error);
+    const messages = {
+      'auth/popup-closed-by-user': 'ログインがキャンセルされました',
+      'auth/popup-blocked': 'ポップアップがブロックされました。許可してください',
+      'auth/email-already-in-use': 'このメールアドレスは既に使用されています',
+      'auth/invalid-email': 'メールアドレスの形式が正しくありません',
+      'auth/weak-password': 'パスワードが弱すぎます（6文字以上）',
+      'auth/wrong-password': 'パスワードが正しくありません',
+      'auth/too-many-requests': 'ログイン試行が多すぎます。しばらく待ってください',
+      'auth/network-request-failed': 'ネットワークエラー。接続を確認してください',
+    };
+    showToast(messages[error.code] || `${provider}ログインに失敗しました`);
+  }
+
+  async function signOut() {
+    try {
+      await auth.signOut();
+      currentUser = null;
+      updateAuthUI();
+      goTo('register');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  }
+
+  // Toast notification
+  function showToast(msg) {
+    let toast = document.getElementById('authToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'authToast';
+      toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:12px 24px;border-radius:25px;font-size:13px;z-index:9999;opacity:0;transition:opacity 0.3s;max-width:340px;text-align:center;font-family:"Noto Sans JP",sans-serif;pointer-events:none;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.pointerEvents = 'auto';
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.pointerEvents = 'none'; }, 3000);
+  }
+
+  // Handle LINE callback (check URL params on load)
+  function handleLINECallback() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    if (code && state === sessionStorage.getItem('line_state')) {
+      sessionStorage.removeItem('line_state');
+      // In production: send code to your backend to exchange for LINE token,
+      // then create a Firebase custom token
+      showToast('LINEログイン成功！');
+      window.history.replaceState({}, '', window.location.pathname);
+      goTo('usertype');
+    }
+  }
+
+  // Screen navigation
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Splash → Onboarding
+  setTimeout(() => {
+    // If already logged in, skip to main
+    if (auth.currentUser) {
+      goTo('main');
+    } else {
+      goTo('onboarding');
+    }
+  }, 2800);
+
+  // Handle LINE callback on page load
+  handleLINECallback();
+
+  // Onboarding
+  const onboardData = [
+    { icon: '👥', title: 'リアルタイムマッチング', desc: 'GPS・列車情報からリアルタイムで<br>席を譲りたい人と必要な人をマッチング' },
+    { icon: '💳', title: 'ICカードで利用認証', desc: 'お持ちのICカードを登録するだけ！<br>安心の本人認証でご利用いただけます' },
+    { icon: '♿', title: 'バリアフリー情報を共有', desc: 'クエスト形式でバリアフリー情報を<br>みんなで共有して街をもっと優しく' },
+  ];
+  let onboardIdx = 0;
+  function nextOnboard() {
+    onboardIdx++;
+    if (onboardIdx >= onboardData.length) { goTo('register'); return; }
+    const d = onboardData[onboardIdx];
+    document.getElementById('onboardIllust').textContent = d.icon;
+    document.getElementById('onboardTitle').textContent = d.title;
+    document.getElementById('onboardDesc').innerHTML = d.desc;
+    document.querySelectorAll('.onboard-dot').forEach((dot, i) => {
+      dot.className = 'onboard-dot' + (i === onboardIdx ? ' active' : '');
+    });
+  }
+
+  // Tab switching (main app)
+  const tabScreens = ['main', 'quest', 'points', 'map', 'profile'];
+  function switchTab(tab) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  }
+
+  // Main toggle
+  let mainOn = false;
+  function toggleMain() {
+    mainOn = !mainOn;
+    document.getElementById('mainToggle').className = 'status-toggle-btn' + (mainOn ? ' on' : '');
+    document.getElementById('mainStatusText').textContent = mainOn ? '助太刀モード ON' : 'タップして助太刀モードON';
+  }
+
+  // Matching
+  function startMatching() {
+    document.getElementById('matchOverlay').classList.add('show');
+    document.getElementById('matchContent').innerHTML = '<div class="spinner"></div><h2 style="font-size:18px;">マッチング中...</h2><p style="font-size:13px;color:var(--text-light);margin-top:8px;">近くのサポートが必要な方を探しています</p>';
+    document.querySelector('#matchOverlay .sheet-close').textContent = 'キャンセル';
+    setTimeout(() => {
+      document.getElementById('matchContent').innerHTML = '<div class="overlay-icon">🎉</div><h2 style="font-size:18px;">マッチング成立！</h2><p style="font-size:13px;color:var(--text-light);margin-top:8px;">2号車の方とマッチングしました</p><p style="color:var(--success);font-weight:700;margin-top:8px;">+50ポイント獲得！</p>';
+      document.querySelector('#matchOverlay .sheet-close').textContent = '閉じる';
+    }, 2500);
+  }
+  function closeOverlay() { document.getElementById('matchOverlay').classList.remove('show'); }
+
+  // Request sheet
+  function showSheet() { document.getElementById('requestSheet').classList.add('show'); }
+  function closeSheet() { document.getElementById('requestSheet').classList.remove('show'); }
+  function sendReq(type) {
+    closeSheet();
+    goTo('success');
+  }
+
+  // Alert cycling
+  const alerts = [
+    { emoji: '☀️', title: '優しさ接近中！', desc: '丸ノ内線 東京方面に優しい人が多数乗車中' },
+    { emoji: '🌊', title: '猛烈な優しさが接近中！', desc: '銀座線 全車両でサービスONの方がいます' },
+    { emoji: '🏆', title: '渋谷区が1位に浮上！', desc: '今週の優しさランキングが更新されました' },
+  ];
+  let aIdx = 0;
+  setInterval(() => {
+    aIdx = (aIdx + 1) % alerts.length;
+    document.getElementById('alertEmoji').textContent = alerts[aIdx].emoji;
+    document.getElementById('alertTitle').textContent = alerts[aIdx].title;
+    document.getElementById('alertDesc').textContent = alerts[aIdx].desc;
+  }, 4000);
+
+
+  // ===== GPS & MAP MODULE =====
+
+  // --- 主要駅データ（東京近郊） ---
+  const STATIONS = [
+    { name: '東京', lat: 35.6812, lng: 139.7671, lines: ['JR山手線','JR中央線','丸ノ内線'] },
+    { name: '新宿', lat: 35.6896, lng: 139.7006, lines: ['JR山手線','JR中央線','丸ノ内線','都営大江戸線'] },
+    { name: '渋谷', lat: 35.6580, lng: 139.7016, lines: ['JR山手線','銀座線','半蔵門線','東急東横線'] },
+    { name: '池袋', lat: 35.7295, lng: 139.7109, lines: ['JR山手線','丸ノ内線','有楽町線'] },
+    { name: '品川', lat: 35.6284, lng: 139.7387, lines: ['JR山手線','JR東海道線','京急本線'] },
+    { name: '上野', lat: 35.7141, lng: 139.7774, lines: ['JR山手線','銀座線','日比谷線'] },
+    { name: '秋葉原', lat: 35.6984, lng: 139.7731, lines: ['JR山手線','JR総武線','日比谷線'] },
+    { name: '大手町', lat: 35.6864, lng: 139.7638, lines: ['丸ノ内線','千代田線','半蔵門線','東西線'] },
+    { name: '銀座', lat: 35.6717, lng: 139.7647, lines: ['銀座線','丸ノ内線','日比谷線'] },
+    { name: '六本木', lat: 35.6627, lng: 139.7312, lines: ['日比谷線','都営大江戸線'] },
+    { name: '恵比寿', lat: 35.6467, lng: 139.7100, lines: ['JR山手線','日比谷線'] },
+    { name: '目黒', lat: 35.6337, lng: 139.7158, lines: ['JR山手線','南北線','都営三田線'] },
+    { name: '五反田', lat: 35.6264, lng: 139.7234, lines: ['JR山手線','都営浅草線','東急池上線'] },
+    { name: '大崎', lat: 35.6197, lng: 139.7284, lines: ['JR山手線','JR湘南新宿ライン','りんかい線'] },
+    { name: '田町', lat: 35.6459, lng: 139.7477, lines: ['JR山手線','JR京浜東北線'] },
+    { name: '浜松町', lat: 35.6555, lng: 139.7569, lines: ['JR山手線','東京モノレール'] },
+    { name: '新橋', lat: 35.6661, lng: 139.7583, lines: ['JR山手線','銀座線','都営浅草線','ゆりかもめ'] },
+    { name: '有楽町', lat: 35.6749, lng: 139.7630, lines: ['JR山手線','有楽町線'] },
+    { name: '神田', lat: 35.6917, lng: 139.7709, lines: ['JR山手線','JR中央線','銀座線'] },
+    { name: '御茶ノ水', lat: 35.6993, lng: 139.7653, lines: ['JR中央線','丸ノ内線'] },
+    { name: '飯田橋', lat: 35.7021, lng: 139.7455, lines: ['JR総武線','東西線','有楽町線','南北線'] },
+    { name: '四ツ谷', lat: 35.6860, lng: 139.7300, lines: ['JR中央線','丸ノ内線','南北線'] },
+    { name: '中野', lat: 35.7064, lng: 139.6659, lines: ['JR中央線','東京メトロ東西線'] },
+    { name: '高田馬場', lat: 35.7126, lng: 139.7036, lines: ['JR山手線','東西線','西武新宿線'] },
+    { name: '原宿', lat: 35.6702, lng: 139.7027, lines: ['JR山手線'] },
+    { name: '代々木', lat: 35.6834, lng: 139.7021, lines: ['JR山手線','都営大江戸線'] },
+    { name: '表参道', lat: 35.6653, lng: 139.7122, lines: ['銀座線','千代田線','半蔵門線'] },
+    { name: '赤坂', lat: 35.6729, lng: 139.7377, lines: ['千代田線'] },
+    { name: '溜池山王', lat: 35.6740, lng: 139.7413, lines: ['銀座線','南北線'] },
+    { name: '日比谷', lat: 35.6751, lng: 139.7600, lines: ['日比谷線','千代田線','都営三田線'] },
+    { name: '横浜', lat: 35.4657, lng: 139.6225, lines: ['JR東海道線','JR横須賀線','京急本線','東急東横線'] },
+    { name: '川崎', lat: 35.5309, lng: 139.6989, lines: ['JR東海道線','JR京浜東北線','京急本線'] },
+    { name: '大宮', lat: 35.9062, lng: 139.6239, lines: ['JR京浜東北線','JR高崎線','JR宇都宮線','東武野田線'] },
+    { name: '千葉', lat: 35.6131, lng: 140.1134, lines: ['JR総武線','JR外房線','JR内房線'] },
+    { name: '吉祥寺', lat: 35.7032, lng: 139.5795, lines: ['JR中央線','京王井の頭線'] },
+    { name: '立川', lat: 35.6979, lng: 139.4142, lines: ['JR中央線','JR南武線','多摩モノレール'] },
+    { name: '町田', lat: 35.5424, lng: 139.4454, lines: ['JR横浜線','小田急小田原線'] },
+    { name: '北千住', lat: 35.7497, lng: 139.8048, lines: ['JR常磐線','千代田線','日比谷線','東武伊勢崎線','つくばエクスプレス'] },
+    { name: '押上', lat: 35.7109, lng: 139.8127, lines: ['半蔵門線','都営浅草線','京成押上線','東武伊勢崎線'] },
+    { name: '錦糸町', lat: 35.6968, lng: 139.8137, lines: ['JR総武線','半蔵門線'] },
+  ];
+
+
+  // --- Leaflet地図の初期化 ---
+  let leafletMap = null;
+  let userMarker = null;
+  let stationMarkers = [];
+  let accuracyCircle = null;
+  let gpsWatchId = null;
+  let positionHistory = [];
+  let lastPosition = null;
+
+  function initMap() {
+    if (leafletMap) return;
+    const mapEl = document.getElementById('leafletMap');
+    if (!mapEl) return;
+    leafletMap = L.map('leafletMap', { zoomControl: false }).setView([35.6812, 139.7671], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap', maxZoom: 19,
+    }).addTo(leafletMap);
+    const userIcon = L.divIcon({
+      html: '<div style="width:20px;height:20px;background:#4FC3F7;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(79,195,247,0.5);"></div>',
+      iconSize: [20, 20], iconAnchor: [10, 10], className: '',
+    });
+    userMarker = L.marker([35.6812, 139.7671], { icon: userIcon }).addTo(leafletMap);
+    userMarker.bindPopup('📍 あなたの位置');
+  }
+
+  const origSwitchTab = switchTab;
+  switchTab = function(tab) {
+    origSwitchTab(tab);
+    if (tab === 'map') {
+      setTimeout(() => {
+        initMap();
+        if (leafletMap) leafletMap.invalidateSize();
+        if (!gpsWatchId) requestGPS();
+      }, 100);
+    }
+  };
+
+  function requestGPS() {
+    const statusIcon = document.getElementById('gpsStatusIcon');
+    const statusLabel = document.getElementById('gpsStatusLabel');
+    const statusDetail = document.getElementById('gpsStatusDetail');
+    const btnLocate = document.getElementById('btnLocate');
+    if (!navigator.geolocation) {
+      statusIcon.textContent = '❌';
+      statusLabel.textContent = '位置情報非対応';
+      statusDetail.textContent = 'このブラウザはGPSに対応していません';
+      return;
+    }
+    statusIcon.textContent = '🔄';
+    statusLabel.textContent = '位置情報を取得中...';
+    statusDetail.textContent = 'GPSシグナルを受信しています';
+    btnLocate.textContent = '取得中';
+    btnLocate.disabled = true;
+    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = navigator.geolocation.watchPosition(
+      (pos) => onGPSSuccess(pos),
+      (err) => onGPSError(err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  function onGPSSuccess(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    const speed = position.coords.speed;
+    const timestamp = position.timestamp;
+    document.getElementById('gpsStatusIcon').textContent = '✅';
+    document.getElementById('gpsStatusLabel').textContent = '位置情報取得済み';
+    document.getElementById('gpsStatusDetail').textContent = lat.toFixed(4) + ', ' + lng.toFixed(4);
+    document.getElementById('btnLocate').textContent = '更新';
+    document.getElementById('btnLocate').disabled = false;
+    document.getElementById('gpsAccuracy').textContent = accuracy < 50 ? '高' : accuracy < 200 ? '中' : '低';
+    document.getElementById('gpsAccuracyDetail').textContent = '誤差 約' + Math.round(accuracy) + 'm';
+    if (leafletMap && userMarker) {
+      userMarker.setLatLng([lat, lng]);
+      leafletMap.setView([lat, lng], Math.max(leafletMap.getZoom(), 14));
+      if (accuracyCircle) leafletMap.removeLayer(accuracyCircle);
+      accuracyCircle = L.circle([lat, lng], {
+        radius: accuracy, color: '#4FC3F7', fillColor: '#4FC3F7', fillOpacity: 0.1, weight: 1
+      }).addTo(leafletMap);
+    }
+    positionHistory.push({ lat, lng, speed, timestamp, accuracy });
+    if (positionHistory.length > 60) positionHistory.shift();
+    updateNearestStation(lat, lng);
+    updateMovementStatus(speed, timestamp);
+    updateStationMarkers(lat, lng);
+    lastPosition = { lat, lng, speed, timestamp, accuracy };
+  }
+
+  function onGPSError(error) {
+    const statusIcon = document.getElementById('gpsStatusIcon');
+    const statusLabel = document.getElementById('gpsStatusLabel');
+    const statusDetail = document.getElementById('gpsStatusDetail');
+    const btnLocate = document.getElementById('btnLocate');
+    statusIcon.textContent = '⚠️';
+    btnLocate.textContent = '再試行';
+    btnLocate.disabled = false;
+    if (error.code === error.PERMISSION_DENIED) {
+      statusLabel.textContent = '位置情報の許可が必要です';
+      statusDetail.textContent = 'ブラウザの設定から位置情報を許可してください';
+    } else if (error.code === error.POSITION_UNAVAILABLE) {
+      statusLabel.textContent = '位置情報を取得できません';
+      statusDetail.textContent = 'GPSシグナルが弱い場所にいる可能性があります';
+    } else {
+      statusLabel.textContent = '取得がタイムアウトしました';
+      statusDetail.textContent = 'もう一度お試しください';
+    }
+  }
+
+  function getDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function updateNearestStation(lat, lng) {
+    let nearest = null; let minDist = Infinity;
+    STATIONS.forEach(st => { const d = getDistance(lat, lng, st.lat, st.lng); if (d < minDist) { minDist = d; nearest = st; } });
+    if (nearest && minDist < 5000) {
+      document.getElementById('nearestStationName').textContent = nearest.name + '駅';
+      document.getElementById('nearestStationDist').textContent = minDist < 1000 ? '約' + Math.round(minDist) + 'm' : '約' + (minDist/1000).toFixed(1) + 'km';
+      document.getElementById('nearestStationLine').textContent = nearest.lines[0];
+    } else {
+      document.getElementById('nearestStationName').textContent = '駅が見つかりません';
+      document.getElementById('nearestStationDist').textContent = '近くに登録済みの駅がありません';
+      document.getElementById('nearestStationLine').textContent = '--';
+    }
+  }
+
+  function updateMovementStatus(currentSpeed, timestamp) {
+    const speedEl = document.getElementById('movementSpeed');
+    const detailEl = document.getElementById('movementDetail');
+    if (currentSpeed !== null && currentSpeed >= 0) {
+      const kmh = currentSpeed * 3.6;
+      speedEl.textContent = Math.round(kmh) + 'km/h';
+      if (kmh < 2) detailEl.innerHTML = '停止中<span class="speed-indicator speed-still">静止</span>';
+      else if (kmh < 8) detailEl.innerHTML = '徒歩移動中<span class="speed-indicator speed-walking">徒歩</span>';
+      else if (kmh < 20) detailEl.innerHTML = '自転車または低速移動<span class="speed-indicator speed-walking">低速</span>';
+      else detailEl.innerHTML = '乗車中の可能性が高い<span class="speed-indicator speed-train">乗車中</span>';
+      return;
+    }
+    if (positionHistory.length >= 2) {
+      const recent = positionHistory.slice(-5);
+      let totalDist = 0, totalTime = 0;
+      for (let i = 1; i < recent.length; i++) {
+        totalDist += getDistance(recent[i-1].lat, recent[i-1].lng, recent[i].lat, recent[i].lng);
+        totalTime += (recent[i].timestamp - recent[i-1].timestamp) / 1000;
+      }
+      if (totalTime > 0) {
+        const kmh = (totalDist / totalTime) * 3.6;
+        speedEl.textContent = '≈' + Math.round(kmh) + 'km/h';
+        if (kmh < 2) detailEl.innerHTML = '停止中<span class="speed-indicator speed-still">静止</span>';
+        else if (kmh < 8) detailEl.innerHTML = '徒歩移動中<span class="speed-indicator speed-walking">徒歩</span>';
+        else if (kmh >= 20) detailEl.innerHTML = '乗車中の可能性が高い<span class="speed-indicator speed-train">乗車中</span>';
+        else detailEl.innerHTML = '移動中<span class="speed-indicator speed-walking">低速</span>';
+        return;
+      }
+    }
+    speedEl.textContent = '--';
+    detailEl.textContent = 'データ収集中...';
+  }
+
+  function updateStationMarkers(lat, lng) {
+    stationMarkers.forEach(m => leafletMap.removeLayer(m));
+    stationMarkers = [];
+    const stationIcon = L.divIcon({
+      html: '<div style="width:12px;height:12px;background:#FF7043;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>',
+      iconSize: [12, 12], iconAnchor: [6, 6], className: '',
+    });
+    STATIONS.forEach(st => {
+      const d = getDistance(lat, lng, st.lat, st.lng);
+      if (d < 3000) {
+        const marker = L.marker([st.lat, st.lng], { icon: stationIcon }).addTo(leafletMap);
+        marker.bindPopup('<b>🚉 ' + st.name + '駅</b><br>' + st.lines.join('・') + '<br>約' + Math.round(d) + 'm');
+        stationMarkers.push(marker);
+      }
+    });
+  }
+
+
+  // ===== ROUTE SETTINGS MODULE =====
+  let routeConfig = {
+    from: null,
+    to: null,
+    timeGo: '07:30',
+    timeBack: '18:00',
+    days: ['mon','tue','wed','thu','fri'],
+  };
+  let stationSearchTarget = null;
+
+  // Load saved route on startup
+  (function loadRoute() {
+    const saved = localStorage.getItem('suketacchi_route');
+    if (saved) {
+      try {
+        routeConfig = JSON.parse(saved);
+        if (routeConfig.from) {
+          document.getElementById('routeFromName').textContent = routeConfig.from.name + '駅';
+          document.getElementById('routeFromName').classList.remove('placeholder');
+        }
+        if (routeConfig.to) {
+          document.getElementById('routeToName').textContent = routeConfig.to.name + '駅';
+          document.getElementById('routeToName').classList.remove('placeholder');
+        }
+        if (routeConfig.timeGo) document.getElementById('routeTimeGo').value = routeConfig.timeGo;
+        if (routeConfig.timeBack) document.getElementById('routeTimeBack').value = routeConfig.timeBack;
+        document.querySelectorAll('.route-day-btn').forEach(btn => {
+          btn.classList.toggle('active', routeConfig.days.includes(btn.dataset.day));
+        });
+        if (routeConfig.from && routeConfig.to) {
+          document.getElementById('routeStatusArrow').textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
+          updateRoutePreview();
+        }
+      } catch(e) { console.error('Route load error:', e); }
+    }
+  })();
+
+  function openStationSearch(target) {
+    stationSearchTarget = target;
+    document.getElementById('stationSearchModal').classList.add('show');
+    document.getElementById('stationSearchTitle').textContent =
+      target === 'from' ? '乗車駅を選択' : '降車駅を選択';
+    document.getElementById('stationSearchInput').value = '';
+    setTimeout(() => document.getElementById('stationSearchInput').focus(), 100);
+    renderStationList(STATIONS);
+  }
+
+  function closeStationSearch() {
+    document.getElementById('stationSearchModal').classList.remove('show');
+  }
+
+  function filterStations() {
+    const query = document.getElementById('stationSearchInput').value.trim();
+    if (!query) { renderStationList(STATIONS); return; }
+    const filtered = STATIONS.filter(st =>
+      st.name.includes(query) || st.lines.some(l => l.includes(query))
+    );
+    renderStationList(filtered);
+  }
+
+  function renderStationList(stations) {
+    const container = document.getElementById('stationSearchResults');
+    if (stations.length === 0) {
+      container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);">駅が見つかりません</div>';
+      return;
+    }
+    container.innerHTML = stations.map(st =>
+      '<div class="station-search-item" onclick="selectStation(\'' + st.name + '\')">' +
+        '<div style="font-size:20px;">🚉</div>' +
+        '<div><div class="st-name">' + st.name + '駅</div>' +
+        '<div class="st-lines">' + st.lines.join(' / ') + '</div></div>' +
+      '</div>'
+    ).join('');
+  }
+
+  function selectStation(stationName) {
+    const station = STATIONS.find(st => st.name === stationName);
+    if (!station) return;
+    if (stationSearchTarget === 'from') {
+      routeConfig.from = station;
+      document.getElementById('routeFromName').textContent = station.name + '駅';
+      document.getElementById('routeFromName').classList.remove('placeholder');
+    } else {
+      routeConfig.to = station;
+      document.getElementById('routeToName').textContent = station.name + '駅';
+      document.getElementById('routeToName').classList.remove('placeholder');
+    }
+    closeStationSearch();
+    updateRoutePreview();
+  }
+
+  function toggleDay(btn) {
+    btn.classList.toggle('active');
+    routeConfig.days = [...document.querySelectorAll('.route-day-btn.active')].map(b => b.dataset.day);
+  }
+
+  function updateRoutePreview() {
+    const section = document.getElementById('routePreviewSection');
+    if (!routeConfig.from || !routeConfig.to) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    const commonLines = routeConfig.from.lines.filter(l => routeConfig.to.lines.includes(l));
+    const stopsEl = document.getElementById('routePreviewStops');
+    if (commonLines.length > 0) {
+      const line = commonLines[0];
+      const lineStations = STATIONS.filter(st => st.lines.includes(line));
+      let html = '<div class="route-preview-stop" style="background:var(--primary);color:white;">' + routeConfig.from.name + '</div>';
+      const intermediates = lineStations.filter(st => st.name !== routeConfig.from.name && st.name !== routeConfig.to.name);
+      intermediates.slice(0, 3).forEach(st => {
+        html += '<div class="route-preview-arrow">→</div><div class="route-preview-stop">' + st.name + '</div>';
+      });
+      if (intermediates.length > 3) html += '<div class="route-preview-arrow">→</div><div class="route-preview-stop">...</div>';
+      html += '<div class="route-preview-arrow">→</div><div class="route-preview-stop" style="background:var(--danger);color:white;">' + routeConfig.to.name + '</div>';
+      html += '<div style="width:100%;font-size:11px;color:var(--primary-deep);margin-top:8px;">路線: ' + commonLines.join('・') + '</div>';
+      stopsEl.innerHTML = html;
+    } else {
+      stopsEl.innerHTML =
+        '<div class="route-preview-stop" style="background:var(--primary);color:white;">' + routeConfig.from.name + '</div>' +
+        '<div class="route-preview-arrow">→ 乗換 →</div>' +
+        '<div class="route-preview-stop" style="background:var(--danger);color:white;">' + routeConfig.to.name + '</div>' +
+        '<div style="width:100%;font-size:11px;color:var(--text-light);margin-top:8px;">直通路線なし（乗換ルートのマッチング対象）</div>';
+    }
+  }
+
+  function saveRoute() {
+    if (!routeConfig.from || !routeConfig.to) { showToast('乗車駅と降車駅を設定してください'); return; }
+    routeConfig.timeGo = document.getElementById('routeTimeGo').value;
+    routeConfig.timeBack = document.getElementById('routeTimeBack').value;
+    localStorage.setItem('suketacchi_route', JSON.stringify(routeConfig));
+    document.getElementById('routeStatusArrow').textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
+    showToast('✅ 通勤ルートを保存しました');
+    setTimeout(() => goTo('profile'), 800);
+  }
+
+  function isCommuteTime() {
+    if (!routeConfig.from || !routeConfig.to) return false;
+    const now = new Date();
+    const dayMap = { 1:'mon', 2:'tue', 3:'wed', 4:'thu', 5:'fri', 6:'sat', 0:'sun' };
+    if (!routeConfig.days.includes(dayMap[now.getDay()])) return false;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const goMin = parseInt(routeConfig.timeGo.split(':')[0]) * 60 + parseInt(routeConfig.timeGo.split(':')[1]);
+    const backMin = parseInt(routeConfig.timeBack.split(':')[0]) * 60 + parseInt(routeConfig.timeBack.split(':')[1]);
+    const margin = 30;
+    return (nowMin >= goMin - margin && nowMin <= goMin + margin) ||
+           (nowMin >= backMin - margin && nowMin <= backMin + margin);
+  }
+
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>助太っち - Seat it!</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Nunito:wght@700;800;900&display=swap');
+
+  :root {
+    --primary: #4FC3F7;
+    --primary-dark: #29B6F6;
+    --primary-deep: #0288D1;
+    --primary-light: #E1F5FE;
+    --accent: #FFD54F;
+    --accent-dark: #FFC107;
+    --success: #66BB6A;
+    --danger: #EF5350;
+    --pink: #F48FB1;
+    --bg: #FFFFFF;
+    --bg-light: #F5F9FC;
+    --card: #FFFFFF;
+    --text: #333333;
+    --text-light: #888888;
+    --text-blue: #0288D1;
+    --border: #E0E0E0;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+    background: #000;
+    max-width: 430px; margin: 0 auto;
+    min-height: 100vh; position: relative;
+    overflow-x: hidden;
+  }
+  .app-container { background: var(--bg); min-height: 100vh; position: relative; }
+
+  /* ===== SCREEN SYSTEM ===== */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ===== SPLASH ===== */
+  #splash {
+    background: #FFD600;
+    align-items: center; justify-content: center;
+    text-align: center;
+    animation: splashFade 0.5s 2.5s forwards;
+  }
+  @keyframes splashFade { to { opacity: 0; pointer-events: none; } }
+  .splash-mascot { font-size: 80px; margin-bottom: 8px; }
+  .splash-title {
+    font-size: 36px; font-weight: 900;
+    font-family: 'Nunito', sans-serif;
+    color: #333;
+  }
+  .splash-sub { font-size: 14px; color: #666; letter-spacing: 3px; margin-top: 4px; }
+
+  /* ===== ONBOARDING ===== */
+  #onboarding { background: white; }
+  .onboard-header {
+    background: var(--primary);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: white; font-size: 14px; font-weight: 700;
+  }
+  .onboard-skip { background: none; border: none; color: white; font-size: 13px; cursor: pointer; }
+  .onboard-content {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 32px; text-align: center;
+  }
+  .onboard-illustration {
+    width: 200px; height: 200px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 80px; margin-bottom: 32px;
+  }
+  .onboard-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .onboard-desc { font-size: 14px; color: var(--text-light); line-height: 1.7; }
+  .onboard-dots { display: flex; gap: 8px; justify-content: center; margin: 24px 0; }
+  .onboard-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+  }
+  .onboard-dot.active { background: var(--primary); width: 24px; border-radius: 4px; }
+  .onboard-btn {
+    width: calc(100% - 64px); margin: 0 32px 40px;
+    padding: 16px; border: none; border-radius: 30px;
+    background: var(--primary);
+    color: white; font-size: 16px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ===== REGISTRATION / LOGIN ===== */
+  #register { background: white; }
+  .register-hero {
+    background: #FFD600;
+    padding: 40px 24px 32px;
+    text-align: center;
+  }
+  .register-logo { font-size: 60px; }
+  .register-title {
+    font-size: 28px; font-weight: 900; margin-top: 8px;
+    font-family: 'Nunito', sans-serif;
+  }
+  .register-sub { font-size: 12px; color: #666; margin-top: 4px; }
+  .register-form { padding: 32px 24px; }
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 14px 16px;
+    border: 2px solid var(--border); border-radius: 10px;
+    font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--primary); }
+  .form-input::placeholder { color: #CCC; }
+  .btn-full {
+    width: 100%; padding: 16px; border: none; border-radius: 30px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: opacity 0.2s;
+  }
+  .btn-full:active { opacity: 0.8; }
+  .btn-primary-full { background: var(--primary); color: white; }
+  .btn-outline-full { background: none; border: 2px solid var(--primary); color: var(--primary); margin-top: 12px; }
+  .register-footer { text-align: center; margin-top: 24px; }
+  .register-footer a { color: var(--primary); text-decoration: none; font-size: 13px; }
+
+  /* Social Login */
+  .social-login-section { padding: 0 24px; margin-top: 8px; }
+  .social-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0 20px;
+  }
+  .social-divider::before, .social-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .social-divider span { font-size: 12px; color: var(--text-light); white-space: nowrap; }
+  .social-buttons { display: flex; flex-direction: column; gap: 12px; }
+  .social-btn {
+    width: 100%; padding: 14px 16px;
+    border: 2px solid var(--border); border-radius: 12px;
+    background: white; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+  .social-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .social-btn:active { transform: scale(0.98); }
+  .social-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .social-btn.google-btn:hover { border-color: #4285F4; background: #EBF3FF; }
+  .social-btn.apple-btn { background: #000; color: #fff; border-color: #000; }
+  .social-btn.apple-btn:hover { background: #222; }
+  .social-btn.line-btn { background: #06C755; color: #fff; border-color: #06C755; }
+  .social-btn.line-btn:hover { background: #05B34C; }
+
+  /* Auth state - user info bar */
+  .auth-user-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; margin: 0 16px 8px;
+    background: var(--primary-light); border-radius: 12px;
+  }
+  .auth-user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; overflow: hidden;
+  }
+  .auth-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .auth-user-info { flex: 1; }
+  .auth-user-name { font-size: 14px; font-weight: 700; }
+  .auth-user-email { font-size: 11px; color: var(--text-light); }
+  .auth-logout-btn {
+    background: none; border: none; color: var(--text-light);
+    font-size: 12px; cursor: pointer; padding: 4px 8px;
+  }
+
+  /* ===== USER TYPE SELECT (index) ===== */
+  #usertype { background: white; }
+  .usertype-header {
+    background: var(--primary);
+    padding: 14px 16px;
+    color: white; font-size: 15px; font-weight: 700;
+    text-align: center;
+  }
+  .usertype-content {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px;
+  }
+  .usertype-question { font-size: 22px; font-weight: 700; margin-bottom: 40px; text-align: center; }
+  .usertype-options { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+  .usertype-btn {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 24px;
+    border: 2px solid var(--border); border-radius: 16px;
+    background: white; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .usertype-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .usertype-icon { font-size: 40px; }
+  .usertype-label h3 { font-size: 16px; font-weight: 700; }
+  .usertype-label p { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .usertype-action {
+    width: 100%; padding: 16px; border: none; border-radius: 30px;
+    background: var(--primary); color: white;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    margin-top: 32px;
+  }
+
+  /* ===== MAIN APP ===== */
+  #main { background: var(--bg); padding-bottom: 80px; }
+
+  .main-header {
+    background: var(--primary);
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: white;
+  }
+  .main-header-left { display: flex; align-items: center; gap: 10px; }
+  .main-header-logo { font-size: 20px; }
+  .main-header h1 { font-size: 18px; font-weight: 700; }
+  .main-header-right { display: flex; gap: 10px; }
+  .header-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); border: none;
+    color: white; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .notif-badge {
+    position: absolute; top: -2px; right: -2px;
+    width: 14px; height: 14px; background: var(--danger);
+    border-radius: 50%; font-size: 8px; color: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Status card */
+  .status-section { padding: 20px 16px; }
+  .status-card {
+    background: white; border-radius: 16px;
+    padding: 24px; text-align: center;
+    border: 1px solid #EEE;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .status-toggle-btn {
+    width: 90px; height: 90px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #E0E0E0, #BDBDBD);
+    color: white; font-size: 40px; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  .status-toggle-btn.on {
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    box-shadow: 0 4px 20px rgba(79,195,247,0.4);
+    transform: scale(1.05);
+  }
+  .status-text { margin-top: 12px; font-size: 15px; font-weight: 700; }
+  .status-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+  /* Kindness Alert */
+  .kindness-alert {
+    margin: 0 16px 16px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 12px;
+    animation: alertGlow 3s infinite;
+  }
+  @keyframes alertGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,213,79,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(255,213,79,0); }
+  }
+  .alert-emoji { font-size: 26px; }
+  .alert-body h3 { font-size: 13px; color: #E65100; font-weight: 700; }
+  .alert-body p { font-size: 11px; color: #BF360C; margin-top: 1px; }
+
+  /* Match requests */
+  .section-label {
+    padding: 0 16px; margin-bottom: 10px;
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+  .match-card {
+    margin: 0 16px 12px;
+    background: white; border-radius: 14px;
+    border: 1px solid #EEE;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .match-card-top { padding: 16px; }
+  .match-badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .badge-need { background: #FFEBEE; color: #C62828; }
+  .badge-give { background: #E8F5E9; color: #2E7D32; }
+  .match-row { display: flex; gap: 12px; align-items: center; }
+  .match-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .match-info h3 { font-size: 14px; font-weight: 700; }
+  .match-info p { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .match-tags { display: flex; gap: 6px; margin-top: 6px; }
+  .match-tag {
+    padding: 2px 8px; border-radius: 8px; font-size: 10px;
+    background: var(--primary-light); color: var(--text-blue);
+    font-weight: 500;
+  }
+  .match-card-actions {
+    display: flex; border-top: 1px solid #EEE;
+  }
+  .match-action-btn {
+    flex: 1; padding: 13px; border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: background 0.2s;
+  }
+  .match-action-btn:first-child { background: var(--primary); color: white; }
+  .match-action-btn:last-child { background: #F5F5F5; color: var(--text-light); border-left: 1px solid #EEE; }
+
+  /* ===== REQUEST FORM (receiving_side / req) ===== */
+  #request-form { background: white; }
+  .req-header {
+    background: var(--primary);
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    color: white;
+  }
+  .req-back { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+  .req-title { font-size: 15px; font-weight: 700; }
+  .req-form { padding: 24px 16px; flex: 1; }
+  .req-form .form-group { margin-bottom: 18px; }
+  .req-form .form-label { font-size: 13px; color: var(--text-blue); font-weight: 700; }
+  .req-submit {
+    width: calc(100% - 32px); margin: 16px;
+    padding: 16px; border: none; border-radius: 30px;
+    background: var(--primary); color: white;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ===== SUBMISSION SUCCESS ===== */
+  #success { background: white; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+  .success-icon { font-size: 80px; margin-bottom: 24px; }
+  .success-title { font-size: 22px; font-weight: 700; }
+  .success-desc { font-size: 14px; color: var(--text-light); margin-top: 8px; line-height: 1.7; }
+  .success-btn {
+    margin-top: 32px; padding: 16px 48px;
+    border: none; border-radius: 30px;
+    background: var(--primary); color: white;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ===== NO MATCH ===== */
+  #no-match { background: white; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+  .nomatch-mascot { font-size: 100px; margin-bottom: 16px; }
+  .nomatch-title { font-size: 20px; font-weight: 700; }
+  .nomatch-desc { font-size: 13px; color: var(--text-light); margin-top: 8px; line-height: 1.7; }
+  .nomatch-actions { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+  /* ===== QUEST DB ===== */
+  #quest { background: var(--bg-light); padding-bottom: 80px; }
+  .quest-list { padding: 16px; }
+  .quest-item {
+    background: white; border-radius: 14px;
+    padding: 16px; margin-bottom: 12px;
+    display: flex; gap: 14px;
+    border: 1px solid #EEE;
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .quest-item:active { transform: scale(0.98); }
+  .quest-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .qi-blue { background: #E3F2FD; }
+  .qi-purple { background: #F3E5F5; }
+  .qi-green { background: #E8F5E9; }
+  .qi-orange { background: #FFF3E0; }
+  .quest-detail { flex: 1; }
+  .quest-detail h3 { font-size: 14px; font-weight: 700; }
+  .quest-detail p { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .quest-reward-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 8px;
+    background: #FFF8E1; font-size: 11px; color: #F57F17; font-weight: 700;
+    margin-top: 6px;
+  }
+  .quest-progress { width: 100%; height: 6px; background: #EEE; border-radius: 3px; margin-top: 8px; }
+  .quest-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--primary), var(--accent-dark)); }
+
+  /* ===== PROFILE ===== */
+  #profile { background: var(--bg-light); padding-bottom: 80px; }
+  .profile-card {
+    margin: 16px; background: white; border-radius: 16px;
+    padding: 24px; text-align: center;
+    border: 1px solid #EEE;
+  }
+  .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+  .profile-name { font-size: 18px; font-weight: 700; }
+  .profile-badge-title {
+    display: inline-block; margin-top: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent), #FFB300);
+    color: #333; font-size: 11px; font-weight: 700;
+  }
+  .profile-stats {
+    display: flex; justify-content: space-around;
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid #EEE;
+  }
+  .pstat { text-align: center; }
+  .pstat .num { font-size: 24px; font-weight: 900; font-family: 'Nunito', sans-serif; color: var(--primary-deep); }
+  .pstat .label { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+  /* Menu items */
+  .profile-menu { margin: 0 16px; }
+  .menu-section-title { font-size: 12px; color: var(--text-light); font-weight: 700; margin: 16px 0 8px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: white;
+    border-bottom: 1px solid #F0F0F0;
+    cursor: pointer;
+  }
+  .menu-item:first-child { border-radius: 12px 12px 0 0; }
+  .menu-item:last-child { border-radius: 0 0 12px 12px; border-bottom: none; }
+  .menu-icon { font-size: 20px; }
+  .menu-label { flex: 1; font-size: 14px; }
+  .menu-arrow { color: #CCC; font-size: 14px; }
+
+  /* Character collection */
+  .char-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin: 0 16px;
+  }
+  .char-item {
+    background: white; border-radius: 12px; padding: 12px;
+    text-align: center; border: 1px solid #EEE;
+  }
+  .char-item.locked { opacity: 0.35; }
+  .char-item .emoji { font-size: 36px; }
+  .char-item .name { font-size: 10px; font-weight: 700; margin-top: 4px; }
+
+  /* IC Card */
+  .ic-card {
+    margin: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1A237E, #3949AB);
+    border-radius: 14px; color: white;
+  }
+  .ic-label { font-size: 11px; opacity: 0.7; }
+  .ic-number { font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .ic-verified { font-size: 11px; margin-top: 8px; opacity: 0.7; }
+
+  /* ===== POINTS ===== */
+  #points { background: var(--bg-light); padding-bottom: 80px; }
+  .points-hero {
+    margin: 16px; padding: 28px 24px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    border-radius: 16px; color: white; text-align: center;
+  }
+  .points-label { font-size: 13px; opacity: 0.85; }
+  .points-num { font-size: 48px; font-weight: 900; font-family: 'Nunito', sans-serif; }
+  .points-sub { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+  .points-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .points-btn {
+    flex: 1; padding: 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.2); border: none;
+    color: white; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .ranking-section { padding: 0 16px; }
+  .ranking-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; background: white; border-radius: 10px;
+    margin-bottom: 6px; border: 1px solid #EEE;
+  }
+  .rank-badge { font-size: 18px; width: 28px; text-align: center; }
+  .rank-name { font-size: 13px; font-weight: 500; min-width: 72px; }
+  .rank-bar { flex: 1; height: 8px; background: #EEE; border-radius: 4px; overflow: hidden; }
+  .rank-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--accent-dark)); }
+  .rank-score { font-size: 13px; font-weight: 700; color: var(--primary-deep); min-width: 36px; text-align: right; }
+
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px; background: white; margin: 0 16px 6px;
+    border-radius: 10px; border: 1px solid #EEE;
+  }
+  .hist-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .hist-green { background: #E8F5E9; }
+  .hist-orange { background: #FFF3E0; }
+  .hist-detail { flex: 1; }
+  .hist-detail h4 { font-size: 13px; }
+  .hist-detail p { font-size: 11px; color: var(--text-light); }
+  .hist-pts { font-weight: 700; font-family: 'Nunito', sans-serif; font-size: 14px; }
+  .pts-plus { color: var(--success); }
+  .pts-minus { color: var(--text-light); }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: white;
+    border-top: 1px solid #EEE;
+    display: flex; justify-content: space-around;
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    z-index: 200;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 12px; border: none; background: none;
+    cursor: pointer; color: #BBB; font-size: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: color 0.2s;
+  }
+  .nav-item.active { color: var(--primary-deep); }
+  .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .nav-center .nav-icon {
+    width: 52px; height: 52px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 26px;
+    margin-top: -24px;
+    box-shadow: 0 4px 16px rgba(79,195,247,0.4);
+  }
+
+  /* ===== MATCHING OVERLAY ===== */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 300; backdrop-filter: blur(4px);
+  }
+  .overlay.show { display: flex; }
+  .overlay-popup {
+    background: white; border-radius: 20px;
+    padding: 32px; text-align: center;
+    width: 88%; max-width: 340px;
+    animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popUp { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .overlay-icon { font-size: 64px; margin-bottom: 16px; }
+  .spinner {
+    width: 60px; height: 60px; margin: 0 auto 16px;
+    border: 4px solid var(--primary-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  /* ===== REQUEST BOTTOM SHEET ===== */
+  .bottom-sheet {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none; align-items: flex-end; justify-content: center;
+    z-index: 300;
+  }
+  .bottom-sheet.show { display: flex; }
+  .sheet-content {
+    background: white; border-radius: 20px 20px 0 0;
+    padding: 20px 20px 32px; width: 100%; max-width: 430px;
+    animation: sheetUp 0.3s ease-out;
+  }
+  @keyframes sheetUp { 0% { transform: translateY(100%); } }
+  .sheet-handle { width: 36px; height: 4px; background: #DDD; border-radius: 2px; margin: 0 auto 16px; }
+  .sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .sheet-desc { font-size: 13px; color: var(--text-light); }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+  .sheet-option {
+    padding: 16px 8px; border-radius: 14px;
+    border: 2px solid #EEE; background: white;
+    text-align: center; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.2s;
+  }
+  .sheet-option:hover { border-color: var(--primary); background: var(--primary-light); }
+  .sheet-option .emoji { font-size: 32px; display: block; }
+  .sheet-option .label { font-size: 11px; font-weight: 700; margin-top: 6px; display: block; }
+  .sheet-close {
+    width: 100%; padding: 14px; border: none; border-radius: 30px;
+    background: #F0F0F0; color: var(--text-light);
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    margin-top: 16px;
+  }
+
+  /* ===== MAP ===== */
+  #map { background: var(--bg-light); padding-bottom: 80px; }
+  #leafletMap { width: 100%; height: 300px; border-radius: 16px; z-index: 1; }
+  .map-container { margin: 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .map-status-bar {
+    margin: 12px 16px; padding: 12px 16px; border-radius: 12px;
+    background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px;
+  }
+  .map-status-icon { font-size: 24px; }
+  .map-status-text { flex: 1; }
+  .map-status-text .status-label { font-weight: 700; color: var(--text); }
+  .map-status-text .status-detail { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .map-btn-locate {
+    padding: 8px 16px; border: none; border-radius: 20px;
+    background: var(--primary); color: white; font-size: 12px;
+    font-weight: 700; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+    white-space: nowrap;
+  }
+  .map-info-cards { margin: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .map-info-card {
+    background: white; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .map-info-card .card-icon { font-size: 28px; }
+  .map-info-card .card-content { flex: 1; }
+  .map-info-card .card-title { font-size: 14px; font-weight: 700; }
+  .map-info-card .card-desc { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .map-info-card .card-value { font-size: 16px; font-weight: 700; color: var(--primary-deep); }
+  .speed-indicator {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; margin-left: 6px;
+  }
+  .speed-walking { background: #E8F5E9; color: #2E7D32; }
+  .speed-train { background: #E3F2FD; color: #1565C0; }
+  .speed-still { background: #F3E5F5; color: #6A1B9A; }
+
   .fade-in { animation: fadeIn 0.3s ease-out; }
   @keyframes fadeIn { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; } }
 </style>
