@@ -738,6 +738,41 @@
     padding: 12px 8px; border-bottom: 1px solid #F5F5F5; cursor: pointer;
   }
   .station-search-item:active { background: var(--primary-light); }
+
+  /* ===== MATCHING PROXIMITY STATUS ===== */
+  .matching-banner {
+    margin: 0 16px 8px; padding: 14px 16px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 12px;
+    animation: matchPulse 2s infinite;
+  }
+  .matching-banner.active { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+  .matching-banner.searching { background: linear-gradient(135deg, #E1F5FE, #B3E5FC); }
+  .matching-banner.inactive { background: #F5F5F5; }
+  @keyframes matchPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(102,187,106,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(102,187,106,0); }
+  }
+  .matching-banner .match-icon { font-size: 24px; }
+  .matching-banner .match-body { flex: 1; }
+  .matching-banner .match-title { font-size: 13px; font-weight: 700; }
+  .matching-banner .match-desc { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .matching-banner .match-badge {
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    background: var(--success); color: white;
+  }
+  .matching-banner.searching .match-badge { background: var(--primary); }
+  .matching-banner.inactive .match-badge { background: var(--text-light); }
+  .match-target-list { margin: 0 16px 8px; display: flex; flex-direction: column; gap: 6px; }
+  .match-target-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: white;
+    border-radius: 10px; border: 1px solid #EEE; font-size: 13px;
+  }
+  .match-target-chip .chip-station { font-weight: 700; }
+  .match-target-chip .chip-line { font-size: 11px; color: var(--primary-deep); }
+  .match-target-chip .chip-dir { font-size: 11px; color: var(--text-light); margin-left: auto; }
   .station-search-item .st-name { font-size: 15px; font-weight: 700; }
   .station-search-item .st-lines { font-size: 11px; color: var(--text-light); margin-top: 2px; }
 
@@ -867,6 +902,16 @@
       <h3 id="alertTitle">優しさ接近中！</h3>
       <p id="alertDesc">丸ノ内線 東京方面に優しい人が多数乗車中</p>
     </div>
+  </div>
+
+  <!-- 通勤マッチングステータス -->
+  <div class="matching-banner inactive" id="mainMatchBanner" style="display:none;cursor:pointer;" onclick="switchTab('map')">
+    <div class="match-icon" id="mainMatchIcon">🔍</div>
+    <div class="match-body">
+      <div class="match-title" id="mainMatchTitle">マッチング</div>
+      <div class="match-desc" id="mainMatchDesc">マップタブで詳細を確認</div>
+    </div>
+    <div class="match-badge" id="mainMatchBadge">OFF</div>
   </div>
 
   <div class="section-label">近くのリクエスト</div>
@@ -1043,6 +1088,17 @@
   <div class="map-container">
     <div id="leafletMap"></div>
   </div>
+
+  <!-- マッチング近接バナー -->
+  <div class="matching-banner inactive" id="matchingBanner" style="display:none;">
+    <div class="match-icon" id="matchBannerIcon">🔍</div>
+    <div class="match-body">
+      <div class="match-title" id="matchBannerTitle">マッチング待機中</div>
+      <div class="match-desc" id="matchBannerDesc">通勤ルートを設定するとマッチングが有効になります</div>
+    </div>
+    <div class="match-badge" id="matchBannerBadge">OFF</div>
+  </div>
+  <div class="match-target-list" id="matchTargetList" style="display:none;"></div>
 
   <!-- GPS情報カード -->
   <div class="map-info-cards" id="gpsInfoCards">
@@ -1677,6 +1733,10 @@
     updateNearestStation(lat, lng);
     updateMovementStatus(speed, timestamp);
     updateStationMarkers(lat, lng);
+
+    // 駅近接マッチング判定
+    checkProximityMatching(lat, lng, speed, timestamp);
+
     lastPosition = { lat, lng, speed, timestamp, accuracy };
   }
 
@@ -1772,6 +1832,135 @@
         stationMarkers.push(marker);
       }
     });
+  }
+
+
+
+  // ===== STATION PROXIMITY MATCHING =====
+  let matchingState = {
+    active: false, nearDeparture: false, riding: false,
+    targetStations: [], currentLine: null, lastMatchCheck: 0,
+  };
+  const MATCH_RADIUS = 500;
+  const MATCH_COOLDOWN = 5000;
+
+  function checkProximityMatching(lat, lng, speed, timestamp) {
+    if (timestamp - matchingState.lastMatchCheck < MATCH_COOLDOWN) return;
+    matchingState.lastMatchCheck = timestamp;
+    const banner = document.getElementById('matchingBanner');
+    if (!banner) return;
+    if (!routeConfig.from || !routeConfig.to) {
+      updateMatchingUI('inactive', '🔍', 'マッチング待機中', '通勤ルートを設定するとマッチングが有効になります', 'OFF');
+      matchingState.active = false; return;
+    }
+    if (!isCommuteTime()) {
+      updateMatchingUI('inactive', '🌙', '通勤時間外', '設定した通勤時間帯になると自動的にマッチングが始まります', 'OFF');
+      matchingState.active = false; matchingState.targetStations = [];
+      updateMatchTargetList(); return;
+    }
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const goMin = parseInt(routeConfig.timeGo.split(':')[0]) * 60 + parseInt(routeConfig.timeGo.split(':')[1]);
+    const backMin = parseInt(routeConfig.timeBack.split(':')[0]) * 60 + parseInt(routeConfig.timeBack.split(':')[1]);
+    const isGoingDirection = Math.abs(nowMin - goMin) < Math.abs(nowMin - backMin);
+    const departureStation = isGoingDirection ? routeConfig.from : routeConfig.to;
+    const arrivalStation = isGoingDirection ? routeConfig.to : routeConfig.from;
+    const distDeparture = getDistance(lat, lng, departureStation.lat, departureStation.lng);
+    matchingState.nearDeparture = distDeparture < MATCH_RADIUS;
+    const kmh = speed !== null && speed >= 0 ? speed * 3.6 : estimateSpeed();
+    matchingState.riding = kmh >= 20;
+
+    if (matchingState.nearDeparture || matchingState.riding) {
+      matchingState.active = true;
+      const targetStations = getForwardStations(departureStation, arrivalStation);
+      matchingState.targetStations = targetStations;
+      matchingState.currentLine = getCommonLine(departureStation, arrivalStation);
+      if (matchingState.riding) {
+        updateMatchingUI('active', '🚃', '乗車中 - マッチング探索中',
+          departureStation.name + ' → ' + arrivalStation.name + ' 方面の同乗者を探しています',
+          targetStations.length + '駅');
+      } else {
+        updateMatchingUI('searching', '📡', departureStation.name + '駅 付近 - マッチング待機',
+          '乗車すると同方面の' + targetStations.length + '駅を対象にマッチング開始します',
+          '待機中');
+      }
+      updateMatchTargetList();
+    } else if (matchingState.active) {
+      matchingState.active = false; matchingState.targetStations = [];
+      updateMatchingUI('inactive', '✅', 'マッチング終了',
+        '通勤エリアから離れました。次回の通勤時間に自動開始します', 'OFF');
+      updateMatchTargetList();
+    } else {
+      updateMatchingUI('searching', '🚶', '通勤時間帯 - 駅へ移動中',
+        departureStation.name + '駅まで約' + formatDistance(distDeparture) + ' - 近づくとマッチング開始',
+        '移動中');
+      matchingState.targetStations = [];
+      updateMatchTargetList();
+    }
+  }
+
+  function estimateSpeed() {
+    if (positionHistory.length < 2) return 0;
+    const recent = positionHistory.slice(-5);
+    let totalDist = 0, totalTime = 0;
+    for (let i = 1; i < recent.length; i++) {
+      totalDist += getDistance(recent[i-1].lat, recent[i-1].lng, recent[i].lat, recent[i].lng);
+      totalTime += (recent[i].timestamp - recent[i-1].timestamp) / 1000;
+    }
+    return totalTime > 0 ? (totalDist / totalTime) * 3.6 : 0;
+  }
+
+  function getForwardStations(departure, arrival) {
+    const commonLines = departure.lines.filter(l => arrival.lines.includes(l));
+    if (commonLines.length === 0) return [arrival];
+    const line = commonLines[0];
+    return STATIONS.filter(st => st.lines.includes(line) && st.name !== departure.name);
+  }
+
+  function getCommonLine(st1, st2) {
+    const common = st1.lines.filter(l => st2.lines.includes(l));
+    return common.length > 0 ? common[0] : null;
+  }
+
+  function formatDistance(m) { return m < 1000 ? Math.round(m) + 'm' : (m/1000).toFixed(1) + 'km'; }
+
+  function updateMatchingUI(state, icon, title, desc, badge) {
+    const banner = document.getElementById('matchingBanner');
+    if (banner) {
+      banner.style.display = 'flex';
+      banner.className = 'matching-banner ' + state;
+      document.getElementById('matchBannerIcon').textContent = icon;
+      document.getElementById('matchBannerTitle').textContent = title;
+      document.getElementById('matchBannerDesc').textContent = desc;
+      document.getElementById('matchBannerBadge').textContent = badge;
+    }
+    const mainBanner = document.getElementById('mainMatchBanner');
+    if (mainBanner) {
+      mainBanner.style.display = 'flex';
+      mainBanner.className = 'matching-banner ' + state;
+      mainBanner.style.cursor = 'pointer';
+      document.getElementById('mainMatchIcon').textContent = icon;
+      document.getElementById('mainMatchTitle').textContent = title;
+      document.getElementById('mainMatchDesc').textContent = desc + '（タップでマップ表示）';
+      document.getElementById('mainMatchBadge').textContent = badge;
+    }
+  }
+
+  function updateMatchTargetList() {
+    const list = document.getElementById('matchTargetList');
+    if (!list) return;
+    if (matchingState.targetStations.length === 0) { list.style.display = 'none'; return; }
+    list.style.display = 'flex';
+    const line = matchingState.currentLine || '乗換';
+    list.innerHTML = matchingState.targetStations.slice(0, 5).map(st =>
+      '<div class="match-target-chip"><span style="font-size:16px;">🚉</span>' +
+      '<span class="chip-station">' + st.name + '駅</span>' +
+      '<span class="chip-line">' + line + '</span>' +
+      '<span class="chip-dir">マッチング対象</span></div>'
+    ).join('') +
+    (matchingState.targetStations.length > 5
+      ? '<div style="text-align:center;font-size:11px;color:var(--text-light);padding:4px;">他' + (matchingState.targetStations.length - 5) + '駅</div>'
+      : '');
   }
 
 
