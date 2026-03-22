@@ -773,6 +773,30 @@
   .match-target-chip .chip-station { font-weight: 700; }
   .match-target-chip .chip-line { font-size: 11px; color: var(--primary-deep); }
   .match-target-chip .chip-dir { font-size: 11px; color: var(--text-light); margin-left: auto; }
+
+  /* Train Info Card */
+  .train-info-card {
+    margin: 0 16px 8px; padding: 12px 14px;
+    background: white; border-radius: var(--radius);
+    border: 1px solid #E3F2FD;
+    display: none;
+  }
+  .train-info-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; padding-bottom: 8px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .train-info-icon { font-size: 18px; }
+  .train-info-line { font-size: 13px; font-weight: 700; color: var(--primary-deep); }
+  .train-info-id { font-size: 10px; color: var(--text-light); margin-left: auto; font-family: monospace; }
+  .train-info-headway { font-size: 11px; color: var(--text-light); margin-left: auto; }
+  .train-info-body { display: flex; flex-direction: column; gap: 4px; }
+  .train-info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: var(--text);
+  }
+  .train-info-val { font-weight: 700; color: var(--primary-deep); }
+
   .station-search-item .st-name { font-size: 15px; font-weight: 700; }
   .station-search-item .st-lines { font-size: 11px; color: var(--text-light); margin-top: 2px; }
 
@@ -1099,6 +1123,9 @@
     <div class="match-badge" id="matchBannerBadge">OFF</div>
   </div>
   <div class="match-target-list" id="matchTargetList" style="display:none;"></div>
+
+  <!-- 電車情報カード -->
+  <div class="train-info-card" id="trainInfoCard"></div>
 
   <!-- GPS情報カード -->
   <div class="map-info-cards" id="gpsInfoCards">
@@ -1876,26 +1903,36 @@
       matchingState.targetStations = targetStations;
       matchingState.currentLine = getCommonLine(departureStation, arrivalStation);
       if (matchingState.riding) {
+        const trainEst = currentTrainInfo && currentTrainInfo.arrivalMinutes
+          ? ' 約' + currentTrainInfo.arrivalMinutes + '分後到着' : '';
         updateMatchingUI('active', '🚃', '乗車中 - マッチング探索中',
-          departureStation.name + ' → ' + arrivalStation.name + ' 方面の同乗者を探しています',
+          departureStation.name + ' → ' + arrivalStation.name + ' 方面の同乗者を探しています' + trainEst,
           targetStations.length + '駅');
       } else {
+        const nextInfo = getNextTrainTime(matchingState.currentLine || '');
+        const waitText = nextInfo.waitMinutes <= 1 ? 'まもなく発車' : '次の電車 約' + nextInfo.waitMinutes + '分後';
         updateMatchingUI('searching', '📡', departureStation.name + '駅 付近 - マッチング待機',
-          '乗車すると同方面の' + targetStations.length + '駅を対象にマッチング開始します',
+          waitText + ' / ' + targetStations.length + '駅を対象にマッチング',
           '待機中');
       }
       updateMatchTargetList();
+      updateTrainInfo();
     } else if (matchingState.active) {
-      matchingState.active = false; matchingState.targetStations = [];
+      matchingState.active = false;
+      matchingState.targetStations = [];
+      currentTrainInfo = null;
       updateMatchingUI('inactive', '✅', 'マッチング終了',
         '通勤エリアから離れました。次回の通勤時間に自動開始します', 'OFF');
       updateMatchTargetList();
+      updateTrainInfo();
     } else {
       updateMatchingUI('searching', '🚶', '通勤時間帯 - 駅へ移動中',
         departureStation.name + '駅まで約' + formatDistance(distDeparture) + ' - 近づくとマッチング開始',
         '移動中');
       matchingState.targetStations = [];
+      currentTrainInfo = null;
       updateMatchTargetList();
+      updateTrainInfo();
     }
   }
 
@@ -1963,6 +2000,140 @@
       : '');
   }
 
+
+  // ===== LIGHTWEIGHT TIMETABLE MODULE =====
+  const TIMETABLE = {
+    'JR山手線':     { rush: 2.5, day: 4, early: 5, night: 4, late: 8 },
+    'JR中央線':     { rush: 2,   day: 5, early: 6, night: 5, late: 10 },
+    'JR京浜東北線': { rush: 3,   day: 5, early: 7, night: 6, late: 12 },
+    'JR総武線':     { rush: 3,   day: 5, early: 7, night: 6, late: 10 },
+    'JR東海道線':   { rush: 5,   day: 8, early: 10, night: 8, late: 15 },
+    'JR横須賀線':   { rush: 5,   day: 8, early: 10, night: 8, late: 15 },
+    'JR常磐線':     { rush: 4,   day: 7, early: 10, night: 7, late: 15 },
+    'JR湘南新宿ライン': { rush: 5, day: 8, early: 10, night: 8, late: 15 },
+    'JR横浜線':     { rush: 4,   day: 7, early: 10, night: 8, late: 15 },
+    'JR南武線':     { rush: 4,   day: 6, early: 8, night: 6, late: 12 },
+    'JR高崎線':     { rush: 5,   day: 8, early: 10, night: 8, late: 15 },
+    'JR宇都宮線':   { rush: 5,   day: 8, early: 10, night: 8, late: 15 },
+    'JR外房線':     { rush: 5,   day: 10, early: 12, night: 10, late: 20 },
+    'JR内房線':     { rush: 5,   day: 10, early: 12, night: 10, late: 20 },
+    '丸ノ内線':     { rush: 2,   day: 4, early: 5, night: 4, late: 8 },
+    '銀座線':       { rush: 2,   day: 3, early: 5, night: 4, late: 8 },
+    '日比谷線':     { rush: 2.5, day: 4, early: 5, night: 4, late: 8 },
+    '千代田線':     { rush: 2.5, day: 4, early: 5, night: 4, late: 8 },
+    '有楽町線':     { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '半蔵門線':     { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '東西線':       { rush: 2,   day: 4, early: 5, night: 5, late: 10 },
+    '南北線':       { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '都営大江戸線': { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '都営浅草線':   { rush: 3,   day: 5, early: 7, night: 6, late: 10 },
+    '都営三田線':   { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '東急東横線':   { rush: 3,   day: 5, early: 6, night: 5, late: 10 },
+    '東急池上線':   { rush: 4,   day: 6, early: 8, night: 7, late: 12 },
+    '京急本線':     { rush: 3,   day: 5, early: 7, night: 5, late: 10 },
+    '京王井の頭線': { rush: 3,   day: 5, early: 7, night: 6, late: 10 },
+    '小田急小田原線':{ rush: 3,  day: 5, early: 7, night: 5, late: 10 },
+    '西武新宿線':   { rush: 3,   day: 5, early: 7, night: 6, late: 10 },
+    '東武伊勢崎線': { rush: 3,   day: 5, early: 7, night: 6, late: 10 },
+    '東武野田線':   { rush: 5,   day: 8, early: 10, night: 8, late: 15 },
+    '京成押上線':   { rush: 5,   day: 7, early: 10, night: 7, late: 12 },
+    'つくばエクスプレス': { rush: 4, day: 6, early: 8, night: 6, late: 12 },
+    '東京メトロ東西線': { rush: 2, day: 4, early: 5, night: 5, late: 10 },
+    '東京モノレール': { rush: 4,  day: 6, early: 8, night: 6, late: 12 },
+    'ゆりかもめ':   { rush: 4,   day: 5, early: 7, night: 5, late: 10 },
+    'りんかい線':   { rush: 5,   day: 8, early: 10, night: 8, late: 12 },
+    '多摩モノレール': { rush: 5,  day: 7, early: 10, night: 7, late: 12 },
+  };
+
+  const TRAVEL_TIMES = {
+    'JR山手線': 2.5, 'JR中央線': 3, 'JR京浜東北線': 3, 'JR総武線': 3, 'JR東海道線': 5,
+    '丸ノ内線': 2, '銀座線': 2, '日比谷線': 2, '千代田線': 2.5, '有楽町線': 2.5,
+    '半蔵門線': 2.5, '東西線': 2, '南北線': 2.5,
+    '都営大江戸線': 2.5, '都営浅草線': 2.5, '都営三田線': 2.5,
+    '東急東横線': 3, '京急本線': 3, '_default': 3,
+  };
+
+  function getTimePeriod(hour) {
+    if (hour >= 0 && hour < 5) return 'late';
+    if (hour >= 5 && hour < 7) return 'early';
+    if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 20)) return 'rush';
+    if (hour >= 9 && hour < 17) return 'day';
+    if (hour >= 20) return 'night';
+    return 'day';
+  }
+
+  function getHeadway(lineName) {
+    const hour = new Date().getHours();
+    const period = getTimePeriod(hour);
+    const schedule = TIMETABLE[lineName];
+    if (!schedule) return 5;
+    return schedule[period] || 5;
+  }
+
+  function getNextTrainTime(lineName) {
+    const now = new Date();
+    const headway = getHeadway(lineName);
+    const minuteInCycle = now.getMinutes() % headway;
+    const secondsToNext = (headway - minuteInCycle) * 60 - now.getSeconds();
+    const nextTime = new Date(now.getTime() + secondsToNext * 1000);
+    return { time: nextTime, waitMinutes: Math.ceil(secondsToNext / 60), headway: headway };
+  }
+
+  function estimateArrival(lineName, stationCount) {
+    const travelPerStation = TRAVEL_TIMES[lineName] || TRAVEL_TIMES['_default'];
+    return { minutes: Math.round(travelPerStation * stationCount), perStation: travelPerStation };
+  }
+
+  function estimateCurrentTrain(lineName, departureTime) {
+    const headway = getHeadway(lineName);
+    return {
+      lineName: lineName, estimatedDeparture: departureTime, headway: headway,
+      trainId: lineName + '_' + String(departureTime.getHours()).padStart(2,'0') + String(Math.round(departureTime.getMinutes() / headway) * headway).padStart(2,'0'),
+      elapsed: 0,
+    };
+  }
+
+  let currentTrainInfo = null;
+
+  function updateTrainInfo() {
+    if (!matchingState.active || !matchingState.currentLine) {
+      currentTrainInfo = null; updateTrainInfoUI(); return;
+    }
+    const line = matchingState.currentLine;
+    const next = getNextTrainTime(line);
+    if (matchingState.riding) {
+      if (!currentTrainInfo || currentTrainInfo.lineName !== line) {
+        currentTrainInfo = estimateCurrentTrain(line, new Date());
+      }
+      const sc = matchingState.targetStations.length;
+      const arrival = estimateArrival(line, sc);
+      currentTrainInfo.stationsRemaining = sc;
+      currentTrainInfo.arrivalMinutes = arrival.minutes;
+      currentTrainInfo.elapsed = Math.round((new Date() - currentTrainInfo.estimatedDeparture) / 60000);
+    } else {
+      currentTrainInfo = { lineName: line, waitMinutes: next.waitMinutes, headway: next.headway, nextTime: next.time, riding: false };
+    }
+    updateTrainInfoUI();
+  }
+
+  function updateTrainInfoUI() {
+    const ctr = document.getElementById('trainInfoCard');
+    if (!ctr) return;
+    if (!currentTrainInfo) { ctr.style.display = 'none'; return; }
+    ctr.style.display = 'block';
+    const line = currentTrainInfo.lineName;
+    if (currentTrainInfo.riding !== false && currentTrainInfo.elapsed !== undefined) {
+      ctr.innerHTML = '<div class="train-info-header"><span class="train-info-icon">🚃</span><span class="train-info-line">' + line + '</span><span class="train-info-id">' + (currentTrainInfo.trainId || '') + '</span></div>' +
+        '<div class="train-info-body"><div class="train-info-row"><span>乗車時間</span><span class="train-info-val">' + currentTrainInfo.elapsed + '分</span></div>' +
+        '<div class="train-info-row"><span>残り駅数</span><span class="train-info-val">' + (currentTrainInfo.stationsRemaining || '-') + '駅</span></div>' +
+        '<div class="train-info-row"><span>到着予定</span><span class="train-info-val">約' + (currentTrainInfo.arrivalMinutes || '-') + '分後</span></div></div>';
+    } else {
+      const nt = currentTrainInfo.nextTime ? String(currentTrainInfo.nextTime.getHours()).padStart(2,'0') + ':' + String(currentTrainInfo.nextTime.getMinutes()).padStart(2,'0') : '--:--';
+      ctr.innerHTML = '<div class="train-info-header"><span class="train-info-icon">🕐</span><span class="train-info-line">' + line + '</span><span class="train-info-headway">約' + currentTrainInfo.headway + '分間隔</span></div>' +
+        '<div class="train-info-body"><div class="train-info-row"><span>次の電車</span><span class="train-info-val">' + nt + '頃</span></div>' +
+        '<div class="train-info-row"><span>待ち時間</span><span class="train-info-val">約' + currentTrainInfo.waitMinutes + '分</span></div></div>';
+    }
+  }
 
   // ===== ROUTE SETTINGS MODULE =====
   let routeConfig = {
