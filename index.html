@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>助太っち - Seat it!</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Nunito:wght@700;800;900&display=swap');
 
@@ -609,47 +610,42 @@
 
   /* ===== MAP ===== */
   #map { background: var(--bg-light); padding-bottom: 80px; }
-  .map-box {
-    margin: 16px; height: 280px;
-    background: linear-gradient(135deg, #E8F4FD, #D4ECFC);
-    border-radius: 16px; position: relative; overflow: hidden;
-    border: 1px solid #D0E8F7;
+  #leafletMap { width: 100%; height: 300px; border-radius: 16px; z-index: 1; }
+  .map-container { margin: 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .map-status-bar {
+    margin: 12px 16px; padding: 12px 16px; border-radius: 12px;
+    background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px;
   }
-  .map-gridlines {
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(79,195,247,0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(79,195,247,0.08) 1px, transparent 1px);
-    background-size: 28px 28px;
-  }
-  .map-pin { position: absolute; text-align: center; cursor: pointer; }
-  .pin-marker {
-    width: 34px; height: 34px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    position: relative;
-  }
-  .pin-glow {
-    position: absolute; inset: -5px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,213,79,0.4), transparent);
-    animation: glowAnim 2s infinite;
-  }
-  @keyframes glowAnim { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0; } }
-  .pin-label {
-    font-size: 9px; font-weight: 700; margin-top: 3px;
-    background: white; padding: 1px 5px; border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  .map-status-icon { font-size: 24px; }
+  .map-status-text { flex: 1; }
+  .map-status-text .status-label { font-weight: 700; color: var(--text); }
+  .map-status-text .status-detail { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .map-btn-locate {
+    padding: 8px 16px; border: none; border-radius: 20px;
+    background: var(--primary); color: white; font-size: 12px;
+    font-weight: 700; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
     white-space: nowrap;
   }
-  .map-legend-bar {
-    position: absolute; bottom: 10px; left: 10px; right: 10px;
-    background: rgba(255,255,255,0.92); border-radius: 8px;
-    padding: 8px 12px; display: flex; gap: 14px; font-size: 10px;
-    backdrop-filter: blur(8px);
+  .map-info-cards { margin: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .map-info-card {
+    background: white; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex; align-items: center; gap: 12px;
   }
-  .leg-item { display: flex; align-items: center; gap: 4px; }
-  .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .map-info-card .card-icon { font-size: 28px; }
+  .map-info-card .card-content { flex: 1; }
+  .map-info-card .card-title { font-size: 14px; font-weight: 700; }
+  .map-info-card .card-desc { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .map-info-card .card-value { font-size: 16px; font-weight: 700; color: var(--primary-deep); }
+  .speed-indicator {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; margin-left: 6px;
+  }
+  .speed-walking { background: #E8F5E9; color: #2E7D32; }
+  .speed-train { background: #E3F2FD; color: #1565C0; }
+  .speed-still { background: #F3E5F5; color: #6A1B9A; }
 
   .fade-in { animation: fadeIn 0.3s ease-out; }
   @keyframes fadeIn { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; } }
@@ -938,41 +934,50 @@
     <div class="main-header-left"><div class="main-header-logo">🗺️</div><h1>優しさマップ</h1></div>
     <div class="main-header-right"><button class="header-btn" onclick="switchTab('profile')">👤</button></div>
   </div>
-  <div class="map-box">
-    <div class="map-gridlines"></div>
-    <div class="map-pin" style="top:35px;left:50px;">
-      <div class="pin-marker" style="background:var(--success);"><div class="pin-glow"></div>😊</div>
-      <div class="pin-label">新宿駅</div>
+
+  <!-- 位置情報ステータス -->
+  <div class="map-status-bar" id="gpsStatusBar">
+    <div class="map-status-icon" id="gpsStatusIcon">📍</div>
+    <div class="map-status-text">
+      <div class="status-label" id="gpsStatusLabel">位置情報を取得中...</div>
+      <div class="status-detail" id="gpsStatusDetail">GPSを起動しています</div>
     </div>
-    <div class="map-pin" style="top:70px;left:170px;">
-      <div class="pin-marker" style="background:var(--accent-dark);"><div class="pin-glow"></div>😊</div>
-      <div class="pin-label">渋谷駅</div>
+    <button class="map-btn-locate" id="btnLocate" onclick="requestGPS()">取得</button>
+  </div>
+
+  <!-- Leaflet地図 -->
+  <div class="map-container">
+    <div id="leafletMap"></div>
+  </div>
+
+  <!-- GPS情報カード -->
+  <div class="map-info-cards" id="gpsInfoCards">
+    <div class="map-info-card">
+      <div class="card-icon">🚉</div>
+      <div class="card-content">
+        <div class="card-title" id="nearestStationName">最寄り駅を検索中...</div>
+        <div class="card-desc" id="nearestStationDist">--</div>
+      </div>
+      <div class="card-value" id="nearestStationLine">--</div>
     </div>
-    <div class="map-pin" style="top:100px;left:290px;">
-      <div class="pin-marker" style="background:var(--primary);">😊</div>
-      <div class="pin-label">東京駅</div>
+    <div class="map-info-card">
+      <div class="card-icon">🏃</div>
+      <div class="card-content">
+        <div class="card-title">移動状態</div>
+        <div class="card-desc" id="movementDetail">検出中...</div>
+      </div>
+      <div class="card-value" id="movementSpeed">--</div>
     </div>
-    <div class="map-pin" style="top:155px;left:90px;">
-      <div class="pin-marker" style="background:var(--pink);"><div class="pin-glow"></div>😊</div>
-      <div class="pin-label">品川駅</div>
-    </div>
-    <div class="map-pin" style="top:170px;left:230px;">
-      <div class="pin-marker" style="background:#9575CD;">😊</div>
-      <div class="pin-label">大手町駅</div>
-    </div>
-    <div class="map-legend-bar">
-      <div class="leg-item"><div class="leg-dot" style="background:var(--success)"></div>高い</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--accent-dark)"></div>やや高い</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div>普通</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#9575CD"></div>データ少</div>
+    <div class="map-info-card">
+      <div class="card-icon">📶</div>
+      <div class="card-content">
+        <div class="card-title">GPS精度</div>
+        <div class="card-desc" id="gpsAccuracyDetail">--</div>
+      </div>
+      <div class="card-value" id="gpsAccuracy">--</div>
     </div>
   </div>
-  <div class="section-label" style="margin-top:8px;">エリア別スコア</div>
-  <div class="ranking-section">
-    <div class="ranking-item"><div class="rank-badge">🥇</div><div class="rank-name">新宿エリア</div><div class="rank-bar"><div class="rank-fill" style="width:92%"></div></div><div class="rank-score">92</div></div>
-    <div class="ranking-item"><div class="rank-badge">🥈</div><div class="rank-name">渋谷エリア</div><div class="rank-bar"><div class="rank-fill" style="width:85%"></div></div><div class="rank-score">85</div></div>
-    <div class="ranking-item"><div class="rank-badge">🥉</div><div class="rank-name">品川エリア</div><div class="rank-bar"><div class="rank-fill" style="width:78%"></div></div><div class="rank-score">78</div></div>
-  </div>
+
   <nav class="bottom-nav">
     <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
     <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
@@ -1095,6 +1100,7 @@
 
 </div><!-- /app-container -->
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
@@ -1348,6 +1354,240 @@
     document.getElementById('alertTitle').textContent = alerts[aIdx].title;
     document.getElementById('alertDesc').textContent = alerts[aIdx].desc;
   }, 4000);
+
+
+  // ===== GPS & MAP MODULE =====
+
+  // --- 主要駅データ（東京近郊） ---
+  const STATIONS = [
+    { name: '東京', lat: 35.6812, lng: 139.7671, lines: ['JR山手線','JR中央線','丸ノ内線'] },
+    { name: '新宿', lat: 35.6896, lng: 139.7006, lines: ['JR山手線','JR中央線','丸ノ内線','都営大江戸線'] },
+    { name: '渋谷', lat: 35.6580, lng: 139.7016, lines: ['JR山手線','銀座線','半蔵門線','東急東横線'] },
+    { name: '池袋', lat: 35.7295, lng: 139.7109, lines: ['JR山手線','丸ノ内線','有楽町線'] },
+    { name: '品川', lat: 35.6284, lng: 139.7387, lines: ['JR山手線','JR東海道線','京急本線'] },
+    { name: '上野', lat: 35.7141, lng: 139.7774, lines: ['JR山手線','銀座線','日比谷線'] },
+    { name: '秋葉原', lat: 35.6984, lng: 139.7731, lines: ['JR山手線','JR総武線','日比谷線'] },
+    { name: '大手町', lat: 35.6864, lng: 139.7638, lines: ['丸ノ内線','千代田線','半蔵門線','東西線'] },
+    { name: '銀座', lat: 35.6717, lng: 139.7647, lines: ['銀座線','丸ノ内線','日比谷線'] },
+    { name: '六本木', lat: 35.6627, lng: 139.7312, lines: ['日比谷線','都営大江戸線'] },
+    { name: '恵比寿', lat: 35.6467, lng: 139.7100, lines: ['JR山手線','日比谷線'] },
+    { name: '目黒', lat: 35.6337, lng: 139.7158, lines: ['JR山手線','南北線','都営三田線'] },
+    { name: '五反田', lat: 35.6264, lng: 139.7234, lines: ['JR山手線','都営浅草線','東急池上線'] },
+    { name: '大崎', lat: 35.6197, lng: 139.7284, lines: ['JR山手線','JR湘南新宿ライン','りんかい線'] },
+    { name: '田町', lat: 35.6459, lng: 139.7477, lines: ['JR山手線','JR京浜東北線'] },
+    { name: '浜松町', lat: 35.6555, lng: 139.7569, lines: ['JR山手線','東京モノレール'] },
+    { name: '新橋', lat: 35.6661, lng: 139.7583, lines: ['JR山手線','銀座線','都営浅草線','ゆりかもめ'] },
+    { name: '有楽町', lat: 35.6749, lng: 139.7630, lines: ['JR山手線','有楽町線'] },
+    { name: '神田', lat: 35.6917, lng: 139.7709, lines: ['JR山手線','JR中央線','銀座線'] },
+    { name: '御茶ノ水', lat: 35.6993, lng: 139.7653, lines: ['JR中央線','丸ノ内線'] },
+    { name: '飯田橋', lat: 35.7021, lng: 139.7455, lines: ['JR総武線','東西線','有楽町線','南北線'] },
+    { name: '四ツ谷', lat: 35.6860, lng: 139.7300, lines: ['JR中央線','丸ノ内線','南北線'] },
+    { name: '中野', lat: 35.7064, lng: 139.6659, lines: ['JR中央線','東京メトロ東西線'] },
+    { name: '高田馬場', lat: 35.7126, lng: 139.7036, lines: ['JR山手線','東西線','西武新宿線'] },
+    { name: '原宿', lat: 35.6702, lng: 139.7027, lines: ['JR山手線'] },
+    { name: '代々木', lat: 35.6834, lng: 139.7021, lines: ['JR山手線','都営大江戸線'] },
+    { name: '表参道', lat: 35.6653, lng: 139.7122, lines: ['銀座線','千代田線','半蔵門線'] },
+    { name: '赤坂', lat: 35.6729, lng: 139.7377, lines: ['千代田線'] },
+    { name: '溜池山王', lat: 35.6740, lng: 139.7413, lines: ['銀座線','南北線'] },
+    { name: '日比谷', lat: 35.6751, lng: 139.7600, lines: ['日比谷線','千代田線','都営三田線'] },
+    { name: '横浜', lat: 35.4657, lng: 139.6225, lines: ['JR東海道線','JR横須賀線','京急本線','東急東横線'] },
+    { name: '川崎', lat: 35.5309, lng: 139.6989, lines: ['JR東海道線','JR京浜東北線','京急本線'] },
+    { name: '大宮', lat: 35.9062, lng: 139.6239, lines: ['JR京浜東北線','JR高崎線','JR宇都宮線','東武野田線'] },
+    { name: '千葉', lat: 35.6131, lng: 140.1134, lines: ['JR総武線','JR外房線','JR内房線'] },
+    { name: '吉祥寺', lat: 35.7032, lng: 139.5795, lines: ['JR中央線','京王井の頭線'] },
+    { name: '立川', lat: 35.6979, lng: 139.4142, lines: ['JR中央線','JR南武線','多摩モノレール'] },
+    { name: '町田', lat: 35.5424, lng: 139.4454, lines: ['JR横浜線','小田急小田原線'] },
+    { name: '北千住', lat: 35.7497, lng: 139.8048, lines: ['JR常磐線','千代田線','日比谷線','東武伊勢崎線','つくばエクスプレス'] },
+    { name: '押上', lat: 35.7109, lng: 139.8127, lines: ['半蔵門線','都営浅草線','京成押上線','東武伊勢崎線'] },
+    { name: '錦糸町', lat: 35.6968, lng: 139.8137, lines: ['JR総武線','半蔵門線'] },
+  ];
+
+
+  // --- Leaflet地図の初期化 ---
+  let leafletMap = null;
+  let userMarker = null;
+  let stationMarkers = [];
+  let accuracyCircle = null;
+  let gpsWatchId = null;
+  let positionHistory = [];
+  let lastPosition = null;
+
+  function initMap() {
+    if (leafletMap) return;
+    const mapEl = document.getElementById('leafletMap');
+    if (!mapEl) return;
+    leafletMap = L.map('leafletMap', { zoomControl: false }).setView([35.6812, 139.7671], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap', maxZoom: 19,
+    }).addTo(leafletMap);
+    const userIcon = L.divIcon({
+      html: '<div style="width:20px;height:20px;background:#4FC3F7;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(79,195,247,0.5);"></div>',
+      iconSize: [20, 20], iconAnchor: [10, 10], className: '',
+    });
+    userMarker = L.marker([35.6812, 139.7671], { icon: userIcon }).addTo(leafletMap);
+    userMarker.bindPopup('📍 あなたの位置');
+  }
+
+  const origSwitchTab = switchTab;
+  switchTab = function(tab) {
+    origSwitchTab(tab);
+    if (tab === 'map') {
+      setTimeout(() => {
+        initMap();
+        if (leafletMap) leafletMap.invalidateSize();
+        if (!gpsWatchId) requestGPS();
+      }, 100);
+    }
+  };
+
+  function requestGPS() {
+    const statusIcon = document.getElementById('gpsStatusIcon');
+    const statusLabel = document.getElementById('gpsStatusLabel');
+    const statusDetail = document.getElementById('gpsStatusDetail');
+    const btnLocate = document.getElementById('btnLocate');
+    if (!navigator.geolocation) {
+      statusIcon.textContent = '❌';
+      statusLabel.textContent = '位置情報非対応';
+      statusDetail.textContent = 'このブラウザはGPSに対応していません';
+      return;
+    }
+    statusIcon.textContent = '🔄';
+    statusLabel.textContent = '位置情報を取得中...';
+    statusDetail.textContent = 'GPSシグナルを受信しています';
+    btnLocate.textContent = '取得中';
+    btnLocate.disabled = true;
+    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = navigator.geolocation.watchPosition(
+      (pos) => onGPSSuccess(pos),
+      (err) => onGPSError(err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  function onGPSSuccess(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    const speed = position.coords.speed;
+    const timestamp = position.timestamp;
+    document.getElementById('gpsStatusIcon').textContent = '✅';
+    document.getElementById('gpsStatusLabel').textContent = '位置情報取得済み';
+    document.getElementById('gpsStatusDetail').textContent = lat.toFixed(4) + ', ' + lng.toFixed(4);
+    document.getElementById('btnLocate').textContent = '更新';
+    document.getElementById('btnLocate').disabled = false;
+    document.getElementById('gpsAccuracy').textContent = accuracy < 50 ? '高' : accuracy < 200 ? '中' : '低';
+    document.getElementById('gpsAccuracyDetail').textContent = '誤差 約' + Math.round(accuracy) + 'm';
+    if (leafletMap && userMarker) {
+      userMarker.setLatLng([lat, lng]);
+      leafletMap.setView([lat, lng], Math.max(leafletMap.getZoom(), 14));
+      if (accuracyCircle) leafletMap.removeLayer(accuracyCircle);
+      accuracyCircle = L.circle([lat, lng], {
+        radius: accuracy, color: '#4FC3F7', fillColor: '#4FC3F7', fillOpacity: 0.1, weight: 1
+      }).addTo(leafletMap);
+    }
+    positionHistory.push({ lat, lng, speed, timestamp, accuracy });
+    if (positionHistory.length > 60) positionHistory.shift();
+    updateNearestStation(lat, lng);
+    updateMovementStatus(speed, timestamp);
+    updateStationMarkers(lat, lng);
+    lastPosition = { lat, lng, speed, timestamp, accuracy };
+  }
+
+  function onGPSError(error) {
+    const statusIcon = document.getElementById('gpsStatusIcon');
+    const statusLabel = document.getElementById('gpsStatusLabel');
+    const statusDetail = document.getElementById('gpsStatusDetail');
+    const btnLocate = document.getElementById('btnLocate');
+    statusIcon.textContent = '⚠️';
+    btnLocate.textContent = '再試行';
+    btnLocate.disabled = false;
+    if (error.code === error.PERMISSION_DENIED) {
+      statusLabel.textContent = '位置情報の許可が必要です';
+      statusDetail.textContent = 'ブラウザの設定から位置情報を許可してください';
+    } else if (error.code === error.POSITION_UNAVAILABLE) {
+      statusLabel.textContent = '位置情報を取得できません';
+      statusDetail.textContent = 'GPSシグナルが弱い場所にいる可能性があります';
+    } else {
+      statusLabel.textContent = '取得がタイムアウトしました';
+      statusDetail.textContent = 'もう一度お試しください';
+    }
+  }
+
+  function getDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function updateNearestStation(lat, lng) {
+    let nearest = null; let minDist = Infinity;
+    STATIONS.forEach(st => { const d = getDistance(lat, lng, st.lat, st.lng); if (d < minDist) { minDist = d; nearest = st; } });
+    if (nearest && minDist < 5000) {
+      document.getElementById('nearestStationName').textContent = nearest.name + '駅';
+      document.getElementById('nearestStationDist').textContent = minDist < 1000 ? '約' + Math.round(minDist) + 'm' : '約' + (minDist/1000).toFixed(1) + 'km';
+      document.getElementById('nearestStationLine').textContent = nearest.lines[0];
+    } else {
+      document.getElementById('nearestStationName').textContent = '駅が見つかりません';
+      document.getElementById('nearestStationDist').textContent = '近くに登録済みの駅がありません';
+      document.getElementById('nearestStationLine').textContent = '--';
+    }
+  }
+
+  function updateMovementStatus(currentSpeed, timestamp) {
+    const speedEl = document.getElementById('movementSpeed');
+    const detailEl = document.getElementById('movementDetail');
+    if (currentSpeed !== null && currentSpeed >= 0) {
+      const kmh = currentSpeed * 3.6;
+      speedEl.textContent = Math.round(kmh) + 'km/h';
+      if (kmh < 2) detailEl.innerHTML = '停止中<span class="speed-indicator speed-still">静止</span>';
+      else if (kmh < 8) detailEl.innerHTML = '徒歩移動中<span class="speed-indicator speed-walking">徒歩</span>';
+      else if (kmh < 20) detailEl.innerHTML = '自転車または低速移動<span class="speed-indicator speed-walking">低速</span>';
+      else detailEl.innerHTML = '乗車中の可能性が高い<span class="speed-indicator speed-train">乗車中</span>';
+      return;
+    }
+    if (positionHistory.length >= 2) {
+      const recent = positionHistory.slice(-5);
+      let totalDist = 0, totalTime = 0;
+      for (let i = 1; i < recent.length; i++) {
+        totalDist += getDistance(recent[i-1].lat, recent[i-1].lng, recent[i].lat, recent[i].lng);
+        totalTime += (recent[i].timestamp - recent[i-1].timestamp) / 1000;
+      }
+      if (totalTime > 0) {
+        const kmh = (totalDist / totalTime) * 3.6;
+        speedEl.textContent = '≈' + Math.round(kmh) + 'km/h';
+        if (kmh < 2) detailEl.innerHTML = '停止中<span class="speed-indicator speed-still">静止</span>';
+        else if (kmh < 8) detailEl.innerHTML = '徒歩移動中<span class="speed-indicator speed-walking">徒歩</span>';
+        else if (kmh >= 20) detailEl.innerHTML = '乗車中の可能性が高い<span class="speed-indicator speed-train">乗車中</span>';
+        else detailEl.innerHTML = '移動中<span class="speed-indicator speed-walking">低速</span>';
+        return;
+      }
+    }
+    speedEl.textContent = '--';
+    detailEl.textContent = 'データ収集中...';
+  }
+
+  function updateStationMarkers(lat, lng) {
+    stationMarkers.forEach(m => leafletMap.removeLayer(m));
+    stationMarkers = [];
+    const stationIcon = L.divIcon({
+      html: '<div style="width:12px;height:12px;background:#FF7043;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>',
+      iconSize: [12, 12], iconAnchor: [6, 6], className: '',
+    });
+    STATIONS.forEach(st => {
+      const d = getDistance(lat, lng, st.lat, st.lng);
+      if (d < 3000) {
+        const marker = L.marker([st.lat, st.lng], { icon: stationIcon }).addTo(leafletMap);
+        marker.bindPopup('<b>🚉 ' + st.name + '駅</b><br>' + st.lines.join('・') + '<br>約' + Math.round(d) + 'm');
+        stationMarkers.push(marker);
+      }
+    });
+  }
+
 </script>
 </body>
 </html>
