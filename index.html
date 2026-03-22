@@ -2146,31 +2146,42 @@
   let stationSearchTarget = null;
 
   // Load saved route on startup
-  (function loadRoute() {
+  function loadRoute() {
     const saved = localStorage.getItem('suketacchi_route');
     if (saved) {
       try {
-        routeConfig = JSON.parse(saved);
-        if (routeConfig.from) {
-          document.getElementById('routeFromName').textContent = routeConfig.from.name + '駅';
-          document.getElementById('routeFromName').classList.remove('placeholder');
-        }
-        if (routeConfig.to) {
-          document.getElementById('routeToName').textContent = routeConfig.to.name + '駅';
-          document.getElementById('routeToName').classList.remove('placeholder');
-        }
-        if (routeConfig.timeGo) document.getElementById('routeTimeGo').value = routeConfig.timeGo;
-        if (routeConfig.timeBack) document.getElementById('routeTimeBack').value = routeConfig.timeBack;
-        document.querySelectorAll('.route-day-btn').forEach(btn => {
-          btn.classList.toggle('active', routeConfig.days.includes(btn.dataset.day));
-        });
-        if (routeConfig.from && routeConfig.to) {
-          document.getElementById('routeStatusArrow').textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
-          updateRoutePreview();
-        }
-      } catch(e) { console.error('Route load error:', e); }
+        const parsed = JSON.parse(saved);
+        routeConfig = parsed;
+      } catch(e) { console.error('Route parse error:', e); return; }
     }
-  })();
+    try {
+      if (routeConfig.from) {
+        const fromEl = document.getElementById('routeFromName');
+        if (fromEl) { fromEl.textContent = routeConfig.from.name + '駅'; fromEl.classList.remove('placeholder'); }
+      }
+      if (routeConfig.to) {
+        const toEl = document.getElementById('routeToName');
+        if (toEl) { toEl.textContent = routeConfig.to.name + '駅'; toEl.classList.remove('placeholder'); }
+      }
+      const goEl = document.getElementById('routeTimeGo');
+      if (goEl && routeConfig.timeGo) goEl.value = routeConfig.timeGo;
+      const backEl = document.getElementById('routeTimeBack');
+      if (backEl && routeConfig.timeBack) backEl.value = routeConfig.timeBack;
+      document.querySelectorAll('.route-day-btn').forEach(btn => {
+        btn.classList.toggle('active', routeConfig.days.includes(btn.dataset.day));
+      });
+      if (routeConfig.from && routeConfig.to) {
+        const arrowEl = document.getElementById('routeStatusArrow');
+        if (arrowEl) arrowEl.textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
+        updateRoutePreview();
+      }
+    } catch(e) { console.error('Route DOM update error:', e); }
+    updateMatchingStatus();
+  }
+  loadRoute();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadRoute);
+  }
 
   function openStationSearch(target) {
     stationSearchTarget = target;
@@ -2265,6 +2276,7 @@
     localStorage.setItem('suketacchi_route', JSON.stringify(routeConfig));
     document.getElementById('routeStatusArrow').textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
     showToast('✅ 通勤ルートを保存しました');
+    updateMatchingStatus();
     setTimeout(() => goTo('profile'), 800);
   }
 
@@ -2276,9 +2288,32 @@
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const goMin = parseInt(routeConfig.timeGo.split(':')[0]) * 60 + parseInt(routeConfig.timeGo.split(':')[1]);
     const backMin = parseInt(routeConfig.timeBack.split(':')[0]) * 60 + parseInt(routeConfig.timeBack.split(':')[1]);
-    const margin = 30;
+    const margin = 60;
     return (nowMin >= goMin - margin && nowMin <= goMin + margin) ||
            (nowMin >= backMin - margin && nowMin <= backMin + margin);
+  }
+
+  // GPS不要のマッチングステータス表示（ルート保存・起動時に呼ばれる）
+  function updateMatchingStatus() {
+    if (!routeConfig.from || !routeConfig.to) {
+      updateMatchingUI('inactive', '🔍', 'マッチング待機中',
+        '通勤ルートを設定するとマッチングが有効になります', 'OFF');
+      return;
+    }
+    if (!isCommuteTime()) {
+      updateMatchingUI('inactive', '🌙', '通勤時間外',
+        routeConfig.from.name + '→' + routeConfig.to.name + ' 設定済み / 通勤時間帯に自動開始', 'OFF');
+      return;
+    }
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const goMin = parseInt(routeConfig.timeGo.split(':')[0]) * 60 + parseInt(routeConfig.timeGo.split(':')[1]);
+    const backMin = parseInt(routeConfig.timeBack.split(':')[0]) * 60 + parseInt(routeConfig.timeBack.split(':')[1]);
+    const isGoing = Math.abs(nowMin - goMin) < Math.abs(nowMin - backMin);
+    const dep = isGoing ? routeConfig.from : routeConfig.to;
+    const arr = isGoing ? routeConfig.to : routeConfig.from;
+    updateMatchingUI('searching', '📡', dep.name + '→' + arr.name + ' マッチング準備中',
+      'GPS位置情報を取得中...駅に近づくとマッチング開始', '準備中');
   }
 
 </script>
