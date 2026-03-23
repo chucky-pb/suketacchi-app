@@ -814,25 +814,6 @@
   <div class="splash-sub">S E A T &nbsp; I T !</div>
 </div>
 
-<!-- ===== ONBOARDING ===== -->
-<div class="screen" id="onboarding">
-  <div class="onboard-header">
-    <span>初期設定</span>
-    <button class="onboard-skip" onclick="goTo('register')">スキップ</button>
-  </div>
-  <div class="onboard-content" id="onboardContent">
-    <div class="onboard-illustration" id="onboardIllust">👥</div>
-    <div class="onboard-title" id="onboardTitle">リアルタイムマッチング</div>
-    <div class="onboard-desc" id="onboardDesc">GPS・列車情報からリアルタイムで<br>席を譲りたい人と必要な人をマッチング</div>
-  </div>
-  <div class="onboard-dots" id="onboardDots">
-    <div class="onboard-dot active"></div>
-    <div class="onboard-dot"></div>
-    <div class="onboard-dot"></div>
-  </div>
-  <button class="onboard-btn" onclick="nextOnboard()">次へ</button>
-</div>
-
 <!-- ===== REGISTER ===== -->
 <div class="screen" id="register">
   <div class="register-hero">
@@ -880,14 +861,14 @@
   <div class="usertype-content">
     <div class="usertype-question">あなたはどなたですか？</div>
     <div class="usertype-options">
-      <button class="usertype-btn" onclick="this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)'">
+      <button class="usertype-btn" id="utGive" onclick="selectUserType('give')">
         <div class="usertype-icon">🪑</div>
         <div class="usertype-label">
           <h3>席を譲りたい</h3>
           <p>座席を必要としている方をサポートします</p>
         </div>
       </button>
-      <button class="usertype-btn" onclick="this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)'">
+      <button class="usertype-btn" id="utNeed" onclick="selectUserType('need')">
         <div class="usertype-icon">🙋</div>
         <div class="usertype-label">
           <h3>席が必要です</h3>
@@ -895,7 +876,7 @@
         </div>
       </button>
     </div>
-    <button class="usertype-action" onclick="goTo('main')">はじめる</button>
+    <button class="usertype-action" id="utNext" onclick="confirmUserType()" style="opacity:0.5;pointer-events:none;">次へ：通勤ルート設定</button>
   </div>
 </div>
 
@@ -908,7 +889,7 @@
     </div>
     <div class="main-header-right">
       <button class="header-btn" onclick="alert('🔔 通知\n\n1. 優しさ接近中！丸ノ内線に14名\n2. クエスト達成まであと1件\n3. +340pt 今月獲得')">🔔<span class="notif-badge">3</span></button>
-      <button class="header-btn" onclick="switchTab('profile')">👤</button>
+      
     </div>
   </div>
 
@@ -938,47 +919,13 @@
     <div class="match-badge" id="mainMatchBadge">OFF</div>
   </div>
 
-  <div class="section-label">近くのリクエスト</div>
+  <div class="section-label" id="homeMatchLabel">マッチング情報</div>
 
-  <div class="match-card fade-in">
-    <div class="match-card-top">
-      <span class="match-badge badge-need">席が必要です</span>
-      <div class="match-row">
-        <div class="match-avatar">🤰</div>
-        <div class="match-info">
-          <h3>匿名ユーザー</h3>
-          <p>丸ノ内線 東京駅 → 大手町駅 ・ 1分前</p>
-          <div class="match-tags">
-            <span class="match-tag">妊娠中</span>
-            <span class="match-tag">2号車</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="match-card-actions">
-      <button class="match-action-btn" onclick="startMatching()">席を譲る</button>
-      <button class="match-action-btn">次へ</button>
-    </div>
-  </div>
-
-  <div class="match-card fade-in">
-    <div class="match-card-top">
-      <span class="match-badge badge-need">席が必要です</span>
-      <div class="match-row">
-        <div class="match-avatar">👴</div>
-        <div class="match-info">
-          <h3>匿名ユーザー</h3>
-          <p>丸ノ内線 東京駅 → 後楽園駅 ・ 3分前</p>
-          <div class="match-tags">
-            <span class="match-tag">高齢者</span>
-            <span class="match-tag">5号車</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="match-card-actions">
-      <button class="match-action-btn" onclick="startMatching()">席を譲る</button>
-      <button class="match-action-btn">次へ</button>
+  <div id="homeMatchArea" style="padding:0 16px;">
+    <div style="background:white;border-radius:16px;padding:24px;text-align:center;border:1px solid #E8E8E8;">
+      <div style="font-size:48px;margin-bottom:12px;" id="homeMatchEmoji">🪑</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;" id="homeMatchTitle">助太刀モードをONにしてください</div>
+      <div style="font-size:12px;color:var(--text-light);line-height:1.6;" id="homeMatchDesc">上のボタンをタップすると、GPSで近くの<br>サポートが必要な方を自動で探します</div>
     </div>
   </div>
 
@@ -987,17 +934,17 @@
     <button class="nav-item active" data-tab="main" onclick="switchTab('main')">
       <span class="nav-icon">🏠</span>ホーム
     </button>
-    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')">
-      <span class="nav-icon">📋</span>クエスト
+    <button class="nav-item" data-tab="map" onclick="switchTab('map')">
+      <span class="nav-icon">🗺️</span>マップ
     </button>
     <button class="nav-item nav-center" onclick="showSheet()">
       <span class="nav-icon">🤝</span>
     </button>
-    <button class="nav-item" data-tab="points" onclick="switchTab('points')">
-      <span class="nav-icon">🏅</span>ポイント
+    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')">
+      <span class="nav-icon">📋</span>クエスト
     </button>
-    <button class="nav-item" data-tab="map" onclick="switchTab('map')">
-      <span class="nav-icon">🗺️</span>マップ
+    <button class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+      <span class="nav-icon">👤</span>マイページ
     </button>
   </nav>
 </div>
@@ -1049,10 +996,10 @@
   </div>
   <nav class="bottom-nav">
     <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
-    <button class="nav-item active" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
-    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
-    <button class="nav-item" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
     <button class="nav-item" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item active" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item" data-tab="profile" onclick="switchTab('profile')"><span class="nav-icon">👤</span>マイページ</button>
   </nav>
 </div>
 
@@ -1084,10 +1031,10 @@
   <div class="history-item"><div class="hist-icon hist-green">🏆</div><div class="hist-detail"><h4>連続5日ボーナス</h4><p>3/17</p></div><div class="hist-pts pts-plus">+100</div></div>
   <nav class="bottom-nav">
     <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
-    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
-    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
-    <button class="nav-item active" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
     <button class="nav-item" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item active" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item" data-tab="profile" onclick="switchTab('profile')"><span class="nav-icon">👤</span>マイページ</button>
   </nav>
 </div>
 
@@ -1157,10 +1104,10 @@
 
   <nav class="bottom-nav">
     <button class="nav-item" data-tab="main" onclick="switchTab('main')"><span class="nav-icon">🏠</span>ホーム</button>
-    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
-    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
-    <button class="nav-item" data-tab="points" onclick="switchTab('points')"><span class="nav-icon">🏅</span>ポイント</button>
     <button class="nav-item active" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span>マップ</button>
+    <button class="nav-item nav-center" onclick="showSheet()"><span class="nav-icon">🤝</span></button>
+    <button class="nav-item" data-tab="quest" onclick="switchTab('quest')"><span class="nav-icon">📋</span>クエスト</button>
+    <button class="nav-item" data-tab="profile" onclick="switchTab('profile')"><span class="nav-icon">👤</span>マイページ</button>
   </nav>
 </div>
 
@@ -1423,7 +1370,7 @@
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await auth.signInWithPopup(provider);
       console.log('Google login success:', result.user.displayName);
-      goTo('usertype');
+      afterLogin();
     } catch (error) {
       handleAuthError(error, 'Google');
     }
@@ -1436,7 +1383,7 @@
       provider.addScope('name');
       const result = await auth.signInWithPopup(provider);
       console.log('Apple login success:', result.user.displayName);
-      goTo('usertype');
+      afterLogin();
     } catch (error) {
       handleAuthError(error, 'Apple');
     }
@@ -1475,7 +1422,7 @@
           throw e;
         }
       }
-      goTo('usertype');
+      afterLogin();
     } catch (error) {
       handleAuthError(error, 'メール');
     }
@@ -1533,7 +1480,7 @@
       // then create a Firebase custom token
       showToast('LINEログイン成功！');
       window.history.replaceState({}, '', window.location.pathname);
-      goTo('usertype');
+      afterLogin();
     }
   }
 
@@ -1545,34 +1492,48 @@
 
   // Splash → Onboarding
   setTimeout(() => {
-    // If already logged in, skip to main
     if (auth.currentUser) {
-      goTo('main');
+      // ログイン済み→ルート未設定ならルート設定へ、それ以外はメインへ
+      const saved = localStorage.getItem('suketacchi_route');
+      if (saved) {
+        try { const r = JSON.parse(saved); if (r.from && r.to) { goTo('main'); return; } } catch(e) {}
+      }
+      goTo('route-settings');
     } else {
-      goTo('onboarding');
+      goTo('register');
     }
-  }, 2800);
+  }, 2000);
 
   // Handle LINE callback on page load
   handleLINECallback();
 
-  // Onboarding
-  const onboardData = [
-    { icon: '👥', title: 'リアルタイムマッチング', desc: 'GPS・列車情報からリアルタイムで<br>席を譲りたい人と必要な人をマッチング' },
-    { icon: '💳', title: 'ICカードで利用認証', desc: 'お持ちのICカードを登録するだけ！<br>安心の本人認証でご利用いただけます' },
-    { icon: '♿', title: 'バリアフリー情報を共有', desc: 'クエスト形式でバリアフリー情報を<br>みんなで共有して街をもっと優しく' },
-  ];
-  let onboardIdx = 0;
-  function nextOnboard() {
-    onboardIdx++;
-    if (onboardIdx >= onboardData.length) { goTo('register'); return; }
-    const d = onboardData[onboardIdx];
-    document.getElementById('onboardIllust').textContent = d.icon;
-    document.getElementById('onboardTitle').textContent = d.title;
-    document.getElementById('onboardDesc').innerHTML = d.desc;
-    document.querySelectorAll('.onboard-dot').forEach((dot, i) => {
-      dot.className = 'onboard-dot' + (i === onboardIdx ? ' active' : '');
-    });
+  // Smart routing after login
+  function afterLogin() {
+    const ut = localStorage.getItem('suketacchi_usertype');
+    if (!ut) { goTo('usertype'); return; }
+    const saved = localStorage.getItem('suketacchi_route');
+    if (saved) {
+      try { const r = JSON.parse(saved); if (r.from && r.to) { goTo('main'); return; } } catch(e) {}
+    }
+    goTo('route-settings');
+  }
+
+  // User type selection
+  let selectedUserType = localStorage.getItem('suketacchi_usertype') || null;
+  function selectUserType(type) {
+    selectedUserType = type;
+    document.getElementById('utGive').style.borderColor = type === 'give' ? 'var(--primary)' : '#E8E8E8';
+    document.getElementById('utGive').style.background = type === 'give' ? 'var(--primary-light)' : 'white';
+    document.getElementById('utNeed').style.borderColor = type === 'need' ? 'var(--primary)' : '#E8E8E8';
+    document.getElementById('utNeed').style.background = type === 'need' ? 'var(--primary-light)' : 'white';
+    const btn = document.getElementById('utNext');
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+  function confirmUserType() {
+    if (!selectedUserType) return;
+    localStorage.setItem('suketacchi_usertype', selectedUserType);
+    goTo('route-settings');
   }
 
   // Tab switching (main app)
@@ -1582,24 +1543,30 @@
     document.getElementById(tab).classList.add('active');
   }
 
-  // Main toggle
+  // Main toggle - GPSマッチングと連動
   let mainOn = false;
+  let gpsWatchId = null;
   function toggleMain() {
+    if (!routeConfig.from || !routeConfig.to) {
+      showToast('まず通勤ルートを設定してください');
+      goTo('route-settings');
+      return;
+    }
     mainOn = !mainOn;
     document.getElementById('mainToggle').className = 'status-toggle-btn' + (mainOn ? ' on' : '');
     document.getElementById('mainStatusText').textContent = mainOn ? '助太刀モード ON' : 'タップして助太刀モードON';
+    if (mainOn) {
+      requestGPS();
+      updateMatchingStatus();
+    } else {
+      if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
+      matchingState.active = false;
+      matchingState.targetStations = [];
+      updateMatchingUI('inactive', '⏸️', '助太刀モード OFF',
+        'タップでマッチングを開始します', 'OFF');
+    }
   }
 
-  // Matching
-  function startMatching() {
-    document.getElementById('matchOverlay').classList.add('show');
-    document.getElementById('matchContent').innerHTML = '<div class="spinner"></div><h2 style="font-size:18px;">マッチング中...</h2><p style="font-size:13px;color:var(--text-light);margin-top:8px;">近くのサポートが必要な方を探しています</p>';
-    document.querySelector('#matchOverlay .sheet-close').textContent = 'キャンセル';
-    setTimeout(() => {
-      document.getElementById('matchContent').innerHTML = '<div class="overlay-icon">🎉</div><h2 style="font-size:18px;">マッチング成立！</h2><p style="font-size:13px;color:var(--text-light);margin-top:8px;">2号車の方とマッチングしました</p><p style="color:var(--success);font-weight:700;margin-top:8px;">+50ポイント獲得！</p>';
-      document.querySelector('#matchOverlay .sheet-close').textContent = '閉じる';
-    }, 2500);
-  }
   function closeOverlay() { document.getElementById('matchOverlay').classList.remove('show'); }
 
   // Request sheet
@@ -2277,7 +2244,7 @@
     document.getElementById('routeStatusArrow').textContent = routeConfig.from.name + '→' + routeConfig.to.name + ' ›';
     showToast('✅ 通勤ルートを保存しました');
     updateMatchingStatus();
-    setTimeout(() => goTo('profile'), 800);
+    setTimeout(() => { const prev = localStorage.getItem('suketacchi_route_saved'); if (!prev) { localStorage.setItem('suketacchi_route_saved', '1'); goTo('main'); } else { goTo('profile'); } }, 800);
   }
 
   function isCommuteTime() {
@@ -2295,14 +2262,25 @@
 
   // GPS不要のマッチングステータス表示（ルート保存・起動時に呼ばれる）
   function updateMatchingStatus() {
+    const homeEmoji = document.getElementById('homeMatchEmoji');
+    const homeTitle = document.getElementById('homeMatchTitle');
+    const homeDesc = document.getElementById('homeMatchDesc');
     if (!routeConfig.from || !routeConfig.to) {
       updateMatchingUI('inactive', '🔍', 'マッチング待機中',
         '通勤ルートを設定するとマッチングが有効になります', 'OFF');
+      if (homeEmoji) { homeEmoji.textContent = '🚆'; homeTitle.textContent = '通勤ルートを設定してください'; homeDesc.innerHTML = 'プロフィールから通勤ルートを設定すると<br>マッチングが利用できます'; }
+      return;
+    }
+    if (!mainOn) {
+      updateMatchingUI('inactive', '⏸️', '助太刀モード OFF',
+        'タップでマッチングを開始します', 'OFF');
+      if (homeEmoji) { homeEmoji.textContent = '🪑'; homeTitle.textContent = '助太刀モードをONにしてください'; homeDesc.innerHTML = '上のボタンをタップすると、GPSで近くの<br>サポートが必要な方を自動で探します'; }
       return;
     }
     if (!isCommuteTime()) {
       updateMatchingUI('inactive', '🌙', '通勤時間外',
         routeConfig.from.name + '→' + routeConfig.to.name + ' 設定済み / 通勤時間帯に自動開始', 'OFF');
+      if (homeEmoji) { homeEmoji.textContent = '🌙'; homeTitle.textContent = '通勤時間外です'; homeDesc.innerHTML = routeConfig.from.name + '→' + routeConfig.to.name + ' 設定済み<br>通勤時間帯になると自動開始します'; }
       return;
     }
     const now = new Date();
@@ -2314,8 +2292,8 @@
     const arr = isGoing ? routeConfig.to : routeConfig.from;
     updateMatchingUI('searching', '📡', dep.name + '→' + arr.name + ' マッチング準備中',
       'GPS位置情報を取得中...駅に近づくとマッチング開始', '準備中');
+    if (homeEmoji) { homeEmoji.textContent = '📡'; homeTitle.textContent = dep.name + '→' + arr.name + ' 探索中'; homeDesc.innerHTML = 'GPSで近くのサポートが必要な方を<br>探しています...'; }
   }
-
 </script>
 </body>
 </html>
